@@ -136,7 +136,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--scenario", required=True)
     p.add_argument("--testid", required=True)
-    for name in ("t-start", "t-normal-start", "t-fault-start", "t-fault-end", "t-end", "fault-start-ms", "restarts"):
+    for name in ("t-start", "t-normal-start", "t-fault-start", "t-fault-end", "t-end",
+                 "fault-before-ms", "fault-after-ms", "restarts"):
         p.add_argument(f"--{name}", type=int, required=True)
     p.add_argument("--out", required=True)
     a = p.parse_args()
@@ -149,7 +150,9 @@ def main():
         if cfg.exists():
             config[app] = json.loads(cfg.read_text())
 
-    exhausted, samples_after_fault = threads_after_fault(a.fault_start_ms / 1000)
+    # 遅延が効き始めたのは、遅延を入れる API を呼ぶ直前と、応答を受けた直後の間。その中点を障害の時刻とする
+    fault_start_ms = (a.fault_before_ms + a.fault_after_ms) / 2
+    exhausted, samples_after_fault = threads_after_fault(fault_start_ms / 1000)
     score = {
         "scenario": a.scenario,
         "testid": a.testid,
@@ -165,6 +168,8 @@ def main():
             "start": a.t_start,
             "normal_start": a.t_normal_start,
             "fault_start": a.t_fault_start,
+            "fault_start_ms": fault_start_ms,
+            "fault_inject_ms": [a.fault_before_ms, a.fault_after_ms],
             "fault_end": a.t_fault_end,
             "end": a.t_end,
         },

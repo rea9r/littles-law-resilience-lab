@@ -8,7 +8,8 @@ const DURATION = __ENV.DURATION || '6m';
 const TIMEOUT_SECONDS = Number(__ENV.HTTP_TIMEOUT_SECONDS || 5);
 
 // 同時に待てる VU の数 = 到着率 × 1 リクエストの最大待ち時間（これもリトルの法則）
-const maxVUs = (rps) => Math.ceil(rps * TIMEOUT_SECONDS * 1.2) + 5;
+// 最初から全部作っておく。足りない VU を途中で作り足すと、作り足す間の到着を捨ててしまう
+const vus = (rps) => Math.ceil(rps * TIMEOUT_SECONDS * 1.2) + 5;
 
 export const options = {
   discardResponseBodies: true,
@@ -19,8 +20,8 @@ export const options = {
       rate: ORDERS_RPS,
       timeUnit: '1s',
       duration: DURATION,
-      preAllocatedVUs: 10,
-      maxVUs: maxVUs(ORDERS_RPS),
+      preAllocatedVUs: vus(ORDERS_RPS),
+      maxVUs: vus(ORDERS_RPS),
     },
     products: {
       executor: 'constant-arrival-rate',
@@ -28,8 +29,8 @@ export const options = {
       rate: PRODUCTS_RPS,
       timeUnit: '1s',
       duration: DURATION,
-      preAllocatedVUs: 5,
-      maxVUs: maxVUs(PRODUCTS_RPS),
+      preAllocatedVUs: vus(PRODUCTS_RPS),
+      maxVUs: vus(PRODUCTS_RPS),
     },
   },
 };

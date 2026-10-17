@@ -23,10 +23,10 @@ now_ms() { python3 -I -c 'import time; print(int(time.time() * 1000))'; }
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
 
-# Grafana にアノテーションを付けて ID を返す
+# Grafana に時刻 $2（ミリ秒）のアノテーションを付けて ID を返す
 annotate() {
   curl -s -X POST "$GRAFANA/api/annotations" -H 'Content-Type: application/json' \
-    -d "{\"dashboardUID\":\"lab\",\"time\":$(now_ms),\"tags\":[\"$SCENARIO\"],\"text\":\"$1\"}" \
+    -d "{\"dashboardUID\":\"lab\",\"time\":$2,\"tags\":[\"$SCENARIO\"],\"text\":\"$1\"}" \
     | python3 -I -c 'import json,sys; print(json.load(sys.stdin).get("id",""))' 2>/dev/null || true
 }
 
@@ -41,9 +41,26 @@ clear_fault() {
   curl -s -X DELETE "$TOXIPROXY/proxies/payment-api/toxics/latency" >/dev/null || true
 }
 
+# 遅延を入れ、API にリクエストを送る直前と応答を受けた直後の時刻（ミリ秒）を出す。遅延が効き始めるのはこの間
+# 時刻を別のプロセスで取ると、その起動の分だけ記録が遅れるので、接続を済ませてから同じプロセスで前後を測る
 inject_fault() {
-  curl -sf -X POST "$TOXIPROXY/proxies/payment-api/toxics" -H 'Content-Type: application/json' \
-    -d "{\"name\":\"latency\",\"type\":\"latency\",\"stream\":\"downstream\",\"attributes\":{\"latency\":$FAULT_LATENCY_MS,\"jitter\":0}}" >/dev/null
+  python3 -I - "$TOXIPROXY" "$FAULT_LATENCY_MS" <<'PY'
+import http.client, json, sys, time, urllib.parse
+
+url = urllib.parse.urlsplit(sys.argv[1])
+body = json.dumps({"name": "latency", "type": "latency", "stream": "downstream",
+                   "attributes": {"latency": int(sys.argv[2]), "jitter": 0}})
+conn = http.client.HTTPConnection(url.hostname, url.port, timeout=10)
+conn.connect()
+before = time.time()
+conn.request("POST", "/proxies/payment-api/toxics", body, {"Content-Type": "application/json"})
+res = conn.getresponse()
+res.read()
+after = time.time()
+if res.status != 200:
+    sys.exit(f"Toxiproxy が {res.status} を返した")
+print(int(before * 1000), int(after * 1000))
+PY
 }
 
 restart_count() {
@@ -83,10 +100,11 @@ T_NORMAL_START=$(date +%s)
 log "平常時（${NORMAL} 秒）"
 sleep "$NORMAL"
 
-inject_fault
-FAULT_START_MS=$(now_ms)
+FAULT_MS=$(inject_fault)
+read -r FAULT_BEFORE_MS FAULT_AFTER_MS <<< "$FAULT_MS"
+FAULT_START_MS=$(( (FAULT_BEFORE_MS + FAULT_AFTER_MS) / 2 ))
 T_FAULT_START=$((FAULT_START_MS / 1000))
-FAULT_ANNOTATION=$(annotate "障害中：payment-api の応答に ${FAULT_LATENCY_MS}ms の遅延")
+FAULT_ANNOTATION=$(annotate "障害中：payment-api の応答に ${FAULT_LATENCY_MS}ms の遅延" "$FAULT_START_MS")
 log "障害開始：payment-api の応答に ${FAULT_LATENCY_MS}ms の遅延（${FAULT} 秒）"
 sleep "$FAULT"
 
@@ -107,7 +125,7 @@ python3 -I scenarios/score.py \
   --scenario "$SCENARIO" --testid "$TESTID" \
   --t-start "$T_START" --t-normal-start "$T_NORMAL_START" \
   --t-fault-start "$T_FAULT_START" --t-fault-end "$T_FAULT_END" --t-end "$T_END" \
-  --fault-start-ms "$FAULT_START_MS" --restarts "$RESTARTS" --out "$OUT"
+  --fault-before-ms "$FAULT_BEFORE_MS" --fault-after-ms "$FAULT_AFTER_MS" --restarts "$RESTARTS" --out "$OUT"
 
 if [ -d tools/node_modules ]; then
   log "グラフを PNG に書き出す"
