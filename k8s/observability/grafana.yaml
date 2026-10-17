@@ -27,7 +27,7 @@ spec:
             - name: GF_AUTH_DISABLE_LOGIN_FORM
               value: "true"
             - name: GF_USERS_DEFAULT_THEME
-              value: light
+              value: dark
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/lab.json
             - name: GF_ANALYTICS_REPORTING_ENABLED

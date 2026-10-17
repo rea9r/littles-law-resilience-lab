@@ -47,7 +47,7 @@ try {
   // Zenn の本文幅で読める大きさ。2 倍で撮って高解像度の画面でもにじまないようにする
   await page.setViewport({ width, height: Math.round((width * 420) / 960), deviceScaleFactor: 2 });
   for (const { id, file } of PANELS.filter((p) => !only || only.includes(p.file))) {
-    const url = `${GRAFANA}/d-solo/lab/lab?orgId=1&panelId=${id}&from=${from * 1000}&to=${to * 1000}&theme=light`;
+    const url = `${GRAFANA}/d-solo/lab/lab?orgId=1&panelId=${id}&from=${from * 1000}&to=${to * 1000}&theme=dark`;
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 60_000 });
     await new Promise((r) => setTimeout(r, 1500));
     // 埋め込み表示の右上に出る「Powered by Grafana」を消す
