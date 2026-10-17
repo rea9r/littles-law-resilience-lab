@@ -75,7 +75,7 @@
 
   // メトリクス：Prometheus から 1 本出て T 字に分かれ、order-api と payment-api の 8081 番を取りに行く。k6 は自分から送る
   // T 字の分かれ目は帯のすぐ上まで下げ、幹を短くする（Toxiproxy から離して、Toxiproxy を監視しているように読ませない）。左右は対称
-  const TY = BY - 16, dl = order.r - 10, dr = pay.x + 10;
+  const TY = BY - 20, dl = order.r - 10, dr = pay.x + 10;
   el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${prom.y} V${TY} H${dl} V${order.b + 1}`, 'marker-end': 'url(#h-met)' });
   el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${TY} H${dr} V${pay.b + 1}`, 'marker-end': 'url(#h-met)' });
   text(svg, prom.cx, TY - 8, 'note mid', tr('1 秒ごとに :8081 を取りに行く', 'scrapes :8081 every second'));
