@@ -1,107 +1,91 @@
 # littles-law-resilience-lab
 
-決済 API が遅くなっただけで、決済と関係のない API まで止まる。その広がり方をリトルの法則（L = λW）で予測し、kind の上で再現して、タイムアウト・バルクヘッド・サーキットブレーカーの決め方を確かめる実験環境です。
+When the payment API slows down, APIs that never call it stop too. This lab predicts how such a failure spreads with Little's Law (L = λW), reproduces it on a local kind cluster, and checks how timeouts, bulkheads and circuit breakers should be sized.
 
-## 構成
+![Architecture](docs/images/architecture.en.png)
 
-```mermaid
-flowchart LR
-  dev["ブラウザ<br/>localhost:3000"]
+- **order-api**: Spring Boot (Kotlin), the service under test. `/orders` calls the payment API and stores the order; `/products` only reads the database. 40 Tomcat threads, a HikariCP pool of 10.
+- **payment-api**: a payment API mock that answers after a log-normal delay with a given mean and p99. Its six threads cap its throughput at 120 rps.
+- **Toxiproxy**: sits between the two and injects latency while the load is running.
+- **k6**: sends a constant arrival rate (an open model) and pushes its metrics to Prometheus.
 
-  subgraph kind["kind クラスタ（Docker Desktop 上）"]
-    subgraph lt["ns: loadtest"]
-      k6["k6<br/>一定の rps で負荷"]
-    end
-    subgraph app["ns: app"]
-      order["order-api<br/>注文 API（測定対象）"]
-      tp["Toxiproxy<br/>遅延を注入"]
-      payment["payment-api<br/>決済 API のモック"]
-      pg[("PostgreSQL")]
-    end
-    subgraph obs["ns: observability"]
-      prom["Prometheus"]
-      graf["Grafana"]
-    end
-  end
+![What is shared inside order-api](docs/images/order-api-resources.en.png)
 
-  k6 -- "/orders 60 rps<br/>/products 10 rps" --> order
-  order -- "/orders だけが呼ぶ" --> tp --> payment
-  order --> pg
-  order -. "メトリクス" .-> prom
-  payment -. "メトリクス" .-> prom
-  k6 -. "負荷側のメトリクス" .-> prom
-  prom --> graf
-  dev --> graf
-```
+## Requirements
 
-- **order-api**：Spring Boot（Kotlin）。`/orders` は決済 API を呼んで注文を保存し、`/products` は DB を読むだけ。Tomcat のスレッド 40、HikariCP のプール 10
-- **payment-api**：決済 API のモック。平均と p99 を指定した対数正規分布の時間だけ待って返す
-- **Toxiproxy**：order-api と payment-api の間に入り、実行中に遅延を注入する
-- **k6**：一定の到着率（オープンモデル）で負荷をかけ、結果を Prometheus に送る
+- Docker Desktop with at least 4 GB of memory
+- [kind](https://kind.sigs.k8s.io/) and kubectl
+- JDK 21 to build the apps
+- Node.js and Google Chrome, only to export graphs and diagrams as PNG
 
-## 必要なもの
+Memory limits are tuned so that everything fits on an 8 GB Mac (about 4 GB for Docker).
 
-- Docker Desktop（メモリ 4GB 以上）
-- [kind](https://kind.sigs.k8s.io/) と kubectl
-- JDK 21（アプリのビルドに使う）
-- Node.js と Google Chrome（グラフを PNG に書き出すときだけ）
-
-8GB の Mac（Docker に約 4GB）で動くように、各コンポーネントのメモリ上限を調整しています。
-
-## 動かし方
+## Usage
 
 ```bash
 make up
 ```
 
-クラスタの作成、アプリのビルド、デプロイまでを行います。Grafana は http://localhost:3000 で開けます。
+Creates the cluster, builds the apps and deploys everything. Grafana is at http://localhost:3000.
 
 ```bash
 make scenario-00-no-defense
 ```
 
-1 つのシナリオを実行します（約 7 分）。平常時 → 決済 API に 5 秒の遅延を 2 分間注入 → 解除、の順に進み、被害スコアを `scenarios/00-no-defense/results/score.json` に書き出します。全シナリオを順に回すときは `make scenarios`（約 1 時間）。
+Runs one scenario (about 7 minutes) and writes its damage score to `scenarios/00-no-defense/results/score.json`. Use `make scenarios` to run all of them in order (about an hour).
+
+![Timeline of one scenario](docs/images/scenario-timeline.en.png)
+
+If `tools/node_modules` exists (`cd tools && npm install`), each run also exports its Grafana panels to `results/panels/`. To export them by hand:
 
 ```bash
-(cd tools/capture && npm install)
-node tools/capture/capture.mjs scenarios/00-no-defense/results
+node tools/capture.mjs scenarios/00-no-defense/results
 ```
-
-その回の時間範囲で Grafana のパネルを PNG に書き出します（`results/panels/`）。
 
 ```bash
 make down
 ```
 
-クラスタを削除します。
+Deletes the cluster.
 
-## シナリオ
+## Scenarios
 
-| シナリオ | 変えること | 確かめること |
+| Scenario | What changes | What it shows |
 |---|---|---|
-| `00-no-defense` | 防御なし（タイムアウト 30 秒、決済はトランザクションの中） | 1 秒足らずでスレッドが尽き、`/products` まで止まる |
-| `01a-timeout` | タイムアウトを 300ms に | DB コネクションの取得待ちが新しい W になり、やはり止まる |
-| `01b-tx-boundary` | 決済をトランザクションの外へ、取得待ちを 250ms に | スレッドは 60 × 0.3 = 18 本で収まる |
-| `02a-no-window` | 決済 API の p99 を 600ms に、タイムアウトは 800ms | タイムアウトの窓が存在しないと止まる |
-| `02b-bulkhead` | バルクヘッドで決済の呼び出しを同時 12 件まで | L を区切れば `/products` は守られる |
-| `03a-retry` | リトライ（3 回試行、間隔 500ms） | W が 1.9 秒に伸び、安全だった設定が崩れる |
-| `03b-circuit-breaker` | サーキットブレーカー | 決済への流入を止めると W がほぼ 0 になる |
-| `04-all-defenses` | すべての防御 | 被害は `/orders` が失敗を返すことだけで済む |
+| `00-no-defense` | No defense: 30 s timeout, the payment call inside the DB transaction | Threads run out in under a second and `/products` goes down too |
+| `01a-timeout` | Timeout cut to 300 ms | Waiting for a DB connection becomes the new W, so it still goes down |
+| `01b-tx-boundary` | Payment call moved out of the transaction, 250 ms connection timeout | Threads settle around 60 × 0.3 + α ≈ 20 |
+| `02a-no-window` | Payment API p99 raised to 600 ms, timeout 800 ms | With no valid timeout window, threads run out |
+| `02b-bulkhead` | Bulkhead: at most 12 concurrent payment calls | Capping L keeps `/products` alive |
+| `03a-retry` | Retry: 3 attempts, 500 ms apart | W grows to 1.9 s; in 2 of 4 runs it had still not recovered 2 minutes after the delay was removed |
+| `03b-circuit-breaker` | Circuit breaker | Cutting the flow to the payment API brings W close to zero |
+| `04-all-defenses` | All of the above | Only `/orders` fails; everything else keeps working |
 
-各シナリオの前提・予測・合格条件は [scenarios/README.md](scenarios/README.md) と `scenarios/<シナリオ>/prediction.md` にあります。作りながら予測とずれたことは [docs/iteration-log.md](docs/iteration-log.md) に残しています。
+Results of every scenario are compared in [scenarios/SUMMARY.md](scenarios/SUMMARY.md).
 
-## ディレクトリ
+## Documentation (Japanese)
+
+The notes behind the Zenn article are written in Japanese.
+
+- [scenarios/README.md](scenarios/README.md) and `scenarios/<scenario>/prediction.md`: assumptions, predictions and pass criteria written before each run
+- [docs/iteration-log.md](docs/iteration-log.md): every place where a prediction missed and how the lab was fixed
+- [docs/article-outline.md](docs/article-outline.md): the outline of the article
+
+## Layout
 
 ```
-apps/order-api/       注文 API（測定対象）
-apps/payment-api/     決済 API のモック
-k8s/base/             アプリ・DB・Toxiproxy のマニフェスト（値は「防御なし」）
-k8s/scenarios/        シナリオごとの設定の差分（kustomize の overlay）
-k8s/observability/    Prometheus と Grafana（ダッシュボード込み）
-loadtest/             k6 のスクリプト
-scenarios/            実行スクリプト・予測・結果
-tools/capture/        Grafana のパネルを PNG に書き出すツール
+apps/order-api/       the service under test
+apps/payment-api/     the payment API mock
+k8s/base/             apps, database and Toxiproxy (values for "no defense")
+k8s/scenarios/        per-scenario differences as kustomize overlays
+k8s/observability/    Prometheus and Grafana, dashboard included
+loadtest/             k6 script
+scenarios/            run script, predictions and results
+tools/                panel capture, diagram sources (tools/diagrams) and their renderer
+docs/                 iteration log, article outline and diagrams
 ```
+
+Diagrams are drawn in HTML/SVG under `tools/diagrams/` and exported in Japanese and English with `node tools/render-diagrams.mjs`.
 
 ## License
 
