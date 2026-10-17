@@ -3,81 +3,64 @@
 <head>
 <meta charset="utf-8">
 <title>Architecture</title>
-<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<svg width="1200" height="620" viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
-    </marker>
-    <marker id="arrow-metrics" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
-    </marker>
-  </defs>
+<!-- 上段：要求の経路（k6 → order-api → Toxiproxy → payment-api）。下段：DB と観測。クラスタの外の run.sh が負荷・設定・遅延を操作する。紫は /orders だけが通る線、赤は障害を入れるところ -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>
+  const svg = document.getElementById('fig');
+  defs(svg);
+  const COL = { k6: [26, 144], order: [204, 150], toxi: [414, 140], pay: [592, 182] };
+  const Y1 = 150, Y2 = 330;
 
-  <rect class="cluster" x="16" y="16" width="1012" height="588" rx="16"/>
-  <text class="cluster-label" x="36" y="46" data-en="kind cluster (on Docker Desktop)">kind クラスタ（Docker Desktop 上）</text>
+  // クラスタの外：run.sh
+  const host = box(svg, 20, 12, 760, [['body', tr('scenarios/run.sh（make scenario-…）', 'scenarios/run.sh (make scenario-…)')]], { fill: '#f4f4f7', pad: 12 });
+  el(svg, 'rect', { class: 'scope', x: 12, y: 96, width: 776, height: 368, rx: 10 });
+  // run.sh からの矢印と交わらないよう、右上に置く
+  text(svg, 772, 122, 'small b end', tr('kind クラスタ', 'kind cluster'));
 
-  <!-- ns: observability -->
-  <rect class="ns" x="500" y="64" width="510" height="160" rx="12"/>
-  <text class="ns-label" x="516" y="88">ns: observability</text>
-  <rect class="node obs" x="529" y="102" width="200" height="96" rx="10"/>
-  <text class="title" x="629" y="144" text-anchor="middle">Prometheus</text>
-  <text class="sub" x="629" y="168" text-anchor="middle" data-en="scrapes every 1 s">1 秒ごとに収集</text>
-  <rect class="node obs" x="790" y="102" width="200" height="96" rx="10"/>
-  <text class="title" x="890" y="144" text-anchor="middle">Grafana</text>
-  <text class="sub" x="890" y="168" text-anchor="middle" data-en="dashboards">ダッシュボード</text>
-  <path class="edge" d="M729 150 H786" marker-end="url(#arrow)"/>
+  // 上段
+  const k6 = box(svg, COL.k6[0], Y1, COL.k6[1], [['name', 'k6'], ['small ord b', tr('/orders 60 件/秒', '/orders 60 req/s')], ['small prd b', tr('/products 10 件/秒', '/products 10 req/s')]]);
+  const order = box(svg, COL.order[0], Y1, COL.order[1], [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('コネクション 10 本', '10 DB connections')]], { stroke: '#19191c', width: 2 });
+  const toxi = box(svg, COL.toxi[0], Y1, COL.toxi[1], [['name', 'Toxiproxy'], ['small bad', tr('障害中は応答を', 'delays responses')], ['small bad', tr('5 秒遅らせる', 'by 5 s (fault)')]], { stroke: '#c03a33', width: 2 });
+  const pay = box(svg, COL.pay[0], Y1, COL.pay[1], [['name', 'payment-api'], ['small', tr('決済 API のモック', 'payment API mock')], ['small', tr('平均 50 ms・p99 120 ms', 'mean 50 ms · p99 120 ms')], ['small', tr('スレッド 6 本', '6 threads')]]);
 
-  <!-- クラスタの外 -->
-  <rect class="node user" x="1048" y="102" width="136" height="96" rx="10"/>
-  <text class="title" x="1116" y="144" text-anchor="middle" data-en="Browser">ブラウザ</text>
-  <text class="sub" x="1116" y="168" text-anchor="middle">localhost:3000</text>
-  <path class="edge" d="M1048 150 H994" marker-end="url(#arrow)"/>
+  // 下段
+  const db = box(svg, COL.order[0], Y2, COL.order[1], [['name', 'PostgreSQL']]);
+  const prom = box(svg, COL.toxi[0] - 12, Y2, COL.toxi[1] + 24, [['name', 'Prometheus'], ['small', 'localhost:9090']]);
+  const graf = box(svg, COL.pay[0], Y2, COL.pay[1], [['name', 'Grafana'], ['small', 'localhost:3000']]);
 
-  <!-- メトリクスは 1 本のバスにまとめて Prometheus へ -->
-  <path class="metrics" d="M125 350 V262 H894 V350"/>
-  <path class="metrics" d="M364 350 V262"/>
-  <path class="metrics" d="M629 262 V202" marker-end="url(#arrow-metrics)"/>
-  <text class="metrics-label" x="140" y="254" data-en="metrics">メトリクス</text>
+  // 要求の経路
+  const ky = Y1 + 34;
+  el(svg, 'line', { class: 'ln', x1: k6.r, y1: ky, x2: order.x - 3, y2: ky, 'marker-end': 'url(#arrow)' });
+  el(svg, 'line', { class: 'ln ord', x1: order.r, y1: ky, x2: toxi.x - 3, y2: ky, 'marker-end': 'url(#arrow-ord)' });
+  text(svg, (order.r + toxi.x) / 2, ky - 8, 'small ord mid', tr('決済', 'payment'));
+  el(svg, 'line', { class: 'ln ord', x1: toxi.r, y1: ky, x2: pay.x - 3, y2: ky, 'marker-end': 'url(#arrow-ord)' });
+  el(svg, 'line', { class: 'ln', x1: order.cx - 30, y1: order.b, x2: order.cx - 30, y2: db.y - 3, 'marker-end': 'url(#arrow)' });
+  // Grafana が Prometheus に問い合わせる（矢印は始める側から）
+  el(svg, 'line', { class: 'ln', x1: graf.x, y1: prom.y + 30, x2: prom.r + 3, y2: prom.y + 30, 'marker-end': 'url(#arrow)' });
 
-  <!-- ns: loadtest -->
-  <rect class="ns" x="32" y="300" width="186" height="280" rx="12"/>
-  <text class="ns-label" x="48" y="324">ns: loadtest</text>
-  <rect class="node load" x="50" y="350" width="150" height="124" rx="10"/>
-  <text class="title" x="125" y="382" text-anchor="middle">k6</text>
-  <text class="sub" x="125" y="406" text-anchor="middle" data-en="constant arrival rate">一定の到着率で負荷</text>
-  <text class="mono" x="125" y="434" text-anchor="middle">/orders 60 rps</text>
-  <text class="mono" x="125" y="454" text-anchor="middle">/products 10 rps</text>
+  // run.sh からの操作
+  // 設定はクラスタ全体（order-api と payment-api）に当てるので、矢印はクラスタの枠で止める
+  const ops = [[k6.cx, k6.y, tr('負荷を開始', 'starts the load')], [order.cx, 96 + 3, tr('設定を適用', 'applies the scenario')], [toxi.cx, toxi.y, tr(':8474 遅延を入れる・外す', ':8474 adds / removes the delay')]];
+  for (const [x, y, s] of ops) {
+    el(svg, 'line', { class: 'ln thin', x1: x, y1: host.b, x2: x, y2: y - 3, 'marker-end': 'url(#arrow)' });
+    text(svg, x + 6, host.b + 26, 'small', s);
+  }
 
-  <!-- ns: app -->
-  <rect class="ns" x="250" y="300" width="760" height="280" rx="12"/>
-  <text class="ns-label" x="266" y="324">ns: app</text>
-
-  <rect class="node target" x="274" y="350" width="180" height="96" rx="10"/>
-  <text class="title" x="364" y="392" text-anchor="middle">order-api</text>
-  <text class="sub" x="364" y="416" text-anchor="middle" data-en="order API (under test)">注文 API（測定対象）</text>
-
-  <rect class="node fault" x="554" y="350" width="150" height="96" rx="10"/>
-  <text class="title" x="629" y="392" text-anchor="middle">Toxiproxy</text>
-  <text class="sub" x="629" y="416" text-anchor="middle" data-en="injects latency">遅延を注入</text>
-
-  <rect class="node downstream" x="804" y="350" width="180" height="96" rx="10"/>
-  <text class="title" x="894" y="392" text-anchor="middle">payment-api</text>
-  <text class="sub" x="894" y="416" text-anchor="middle" data-en="payment API mock">決済 API のモック</text>
-
-  <path class="node db" d="M274 506 a90 14 0 0 1 180 0 v50 a90 14 0 0 1 -180 0 z"/>
-  <path d="M274 506 a90 14 0 0 0 180 0" fill="none" stroke="#16a34a" stroke-width="1.6"/>
-  <text class="title" x="364" y="548" text-anchor="middle">PostgreSQL</text>
-
-  <path class="edge" d="M200 398 H270" marker-end="url(#arrow)"/>
-  <path class="edge" d="M454 398 H550" marker-end="url(#arrow)"/>
-  <text class="edge-label" x="504" y="388" text-anchor="middle" data-en="/orders only">/orders だけ</text>
-  <path class="edge" d="M704 398 H800" marker-end="url(#arrow)"/>
-  <text class="fault-label" x="754" y="388" text-anchor="middle" data-en="+5 s (fault)">障害時は +5 秒</text>
-  <path class="edge" d="M364 446 V488" marker-end="url(#arrow)"/>
-</svg>
-<script src="diagram.js"></script>
+  // メトリクス（灰の点線）。矢印は始める側から向ける：order-api と payment-api の 8081 番は Prometheus が取りに行き、k6 は自分から送る
+  const MY = 290;
+  el(svg, 'path', { class: 'ln thin dot', d: `M${prom.cx - 20} ${prom.y} V${MY} H${order.r - 24} V${order.b + 3}`, 'marker-end': 'url(#arrow-light)' });
+  text(svg, order.r - 18, order.b + 20, 'small', tr(':8081（別のスレッド）', ':8081 (separate threads)'));
+  el(svg, 'path', { class: 'ln thin dot', d: `M${prom.cx + 20} ${prom.y} V${MY} H${pay.cx} V${pay.b + 3}`, 'marker-end': 'url(#arrow-light)' });
+  text(svg, pay.cx + 6, pay.b + 20, 'small', ':8081');
+  text(svg, prom.cx, MY - 8, 'small mid', tr('1 秒ごとに取りに行く', 'scraped every second'));
+  const KY = 442;
+  el(svg, 'path', { class: 'ln thin dot', d: `M${k6.cx} ${k6.b} V${KY} H${prom.cx} V${prom.b + 3}`, 'marker-end': 'url(#arrow-light)' });
+  text(svg, k6.cx + 8, KY - 8, 'small', tr('結果を 2 秒ごとに送る', 'pushes results every 2 s'));
+  canvas(svg, 800, 476);
+</script>
 </body>
 </html>

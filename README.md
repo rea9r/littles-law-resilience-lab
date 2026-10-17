@@ -4,12 +4,10 @@ When the payment API slows down, APIs that never call it stop too. This lab pred
 
 ![Architecture](docs/images/architecture.en.png)
 
-- **order-api**: Spring Boot (Kotlin), the service under test. `/orders` calls the payment API and stores the order; `/products` only reads the database. 40 Tomcat threads, a HikariCP pool of 10.
-- **payment-api**: a payment API mock that answers after a log-normal delay with a given mean and p99. Its six threads cap its throughput at 120 rps.
-- **Toxiproxy**: sits between the two and injects latency while the load is running.
-- **k6**: sends a constant arrival rate (an open model) and pushes its metrics to Prometheus.
-
-![What is shared inside order-api](docs/images/order-api-resources.en.png)
+- **order-api**: Spring Boot (Kotlin), the service under test. `/orders` calls the payment API (inside a DB transaction until scenario 01b moves it out) and stores the order; `/products` only reads the database. Metrics are served on port 8081 by their own threads, so they stay readable when the main 40 run out.
+- **payment-api**: a payment API mock that answers after a log-normal delay. Its six threads cap it at about 120 req/s (6 ÷ 0.05 s).
+- **Toxiproxy**: sits between the two; `scenarios/run.sh` adds and removes the delay through its admin API.
+- **k6**: sends requests at a constant arrival rate (an open model) and pushes its results to Prometheus.
 
 ## What goes wrong
 
@@ -27,12 +25,12 @@ Prometheus scrapes the busy-thread count once a second. In one run, the first sa
 
 ## Requirements
 
-- Docker Desktop with at least 4 GB of memory
+- Docker with at least 4 GB of memory for containers
 - [kind](https://kind.sigs.k8s.io/) and kubectl
 - JDK 21 to build the apps
 - Node.js and Google Chrome, only to export graphs and diagrams as PNG
 
-Memory limits are tuned so that everything fits on an 8 GB Mac (about 4 GB for Docker).
+Memory limits are tuned so that everything fits in about 4 GB.
 
 ## Usage
 
@@ -46,9 +44,11 @@ Creates the cluster, builds the apps and deploys everything. Grafana is at http:
 make scenario-00-no-defense
 ```
 
-Runs one scenario (about 7 minutes) and writes its damage score to `scenarios/00-no-defense/results/score.json`. Use `make scenarios` to run all of them in order (about an hour).
+Runs one scenario and writes its damage score to `scenarios/00-no-defense/results/score.json`. It takes about 7 minutes: applying the scenario and waiting for the Pods, the 6 minutes of load below, then scoring. Use `make scenarios` to run all of them in order (about an hour).
 
 ![Timeline of one scenario](docs/images/scenario-timeline.en.png)
+
+The score records the success rates, busy threads and connection waits for the normal and fault windows (and, for the normal one, measured L against λW), how long the threads took to run out within the first 15 s of the fault, the time to recover (until the start of the first 15 s in which both endpoints stay at or above 99% success; "not recovered" if no such 15 s fits within the 120 s after the delay is removed), and the number of Pod restarts during the load.
 
 If `tools/node_modules` exists (`cd tools && npm install`), each run also exports its Grafana panels to `results/panels/`. To export them by hand:
 
@@ -64,16 +64,22 @@ Deletes the cluster.
 
 ## Scenarios
 
+Most scenarios switch on one or more defenses. Timeouts and the connection-wait limit cap how long a request waits (W), moving the payment call out of the transaction shortens how long it holds a DB connection (W), the bulkhead caps how many payment calls run at once (L), and the circuit breaker stops calls from going out (λ). The timeout, bulkhead and circuit breaker make `/orders` return sooner, so it also holds its thread for less time. Retries do the opposite and raise both W and λ. The labels in the figure are the scenario names in the table below.
+
+![Where each defense acts](docs/images/defenses.en.png)
+
+*Schematic of one `/orders` request, not to scale. Defenses are marked on the top row, where all three resources nest; from 01b on, requests take the shape of the bottom row.*
+
 | Scenario | What changes | What it shows |
 |---|---|---|
 | `00-no-defense` | No defense: 30 s timeout, the payment call inside the DB transaction | Threads run out in about a second and `/products` goes down too |
 | `01a-timeout` | Timeout cut to 300 ms | Waiting for a DB connection becomes the new W, so it still goes down |
-| `01b-tx-boundary` | Payment call moved out of the transaction, 250 ms connection timeout | Threads settle around 60 × 0.3 + α ≈ 20 |
+| `01b-tx-boundary` | Payment call moved out of the transaction, 250 ms connection-wait limit | Threads settle around 60 × 0.3 + α ≈ 20 |
 | `02a-no-window` | Payment API p99 raised to 600 ms, timeout 800 ms | With no valid timeout window, threads run out |
 | `02b-bulkhead` | Bulkhead: at most 12 concurrent payment calls | Capping L keeps `/products` alive |
-| `03a-retry` | Retry: 3 attempts, 500 ms apart | W grows to 1.9 s; in 2 of 4 runs it had still not recovered 2 minutes after the delay was removed |
-| `03b-circuit-breaker` | Circuit breaker | Cutting the flow to the payment API brings W close to zero |
-| `04-all-defenses` | All of the above | Only `/orders` fails; everything else keeps working |
+| `03a-retry` | 01b plus a retry: 3 attempts, 500 ms apart | W grows to 1.9 s; in 2 of 4 runs it had still not recovered 2 minutes after the delay was removed |
+| `03b-circuit-breaker` | 03a plus a circuit breaker | Once it opens, cutting the calls to the payment API (λ) makes `/orders` fail fast, so its W drops close to zero |
+| `04-all-defenses` | 01b plus a bulkhead, a circuit breaker and a gentler retry (2 attempts, 100 ms apart) | Only `/orders` fails; everything else keeps working |
 
 Results of every scenario are compared in [scenarios/SUMMARY.md](scenarios/SUMMARY.md).
 

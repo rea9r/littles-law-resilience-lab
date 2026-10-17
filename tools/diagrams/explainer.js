@@ -24,7 +24,7 @@ function text(parent, x, y, cls, s) {
 /** 矢印と斜線の定義 */
 function defs(svg) {
   const d = el(svg, 'defs');
-  for (const [id, color] of [['arrow', '#6e6e73'], ['arrow-bad', '#c03a33']]) {
+  for (const [id, color] of [['arrow', '#6e6e73'], ['arrow-bad', '#c03a33'], ['arrow-ord', '#5342a2'], ['arrow-prd', '#00697c'], ['arrow-light', '#8a8a92']]) {
     const m = el(d, 'marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' });
     el(m, 'path', { d: 'M0 0L10 5L0 10z', fill: color });
   }
@@ -43,4 +43,12 @@ function canvas(svg, w, h) {
   bg.setAttribute('height', h);
   bg.setAttribute('fill', '#ffffff');
   svg.insertBefore(bg, svg.firstChild);
+}
+
+/** 角の丸い箱を描き、行を中央にそろえて書く。lines は [クラス, 文字] の並び。箱の位置と大きさを返す */
+function box(parent, x, y, w, lines, { stroke = '#8a8a92', fill = '#ffffff', width = 1.4, pad = 14, gap = 20 } = {}) {
+  const h = pad * 2 + 14 + (lines.length - 1) * gap;
+  el(parent, 'rect', { x, y, width: w, height: h, rx: 6, fill, stroke, 'stroke-width': width });
+  lines.forEach(([cls, s], i) => text(parent, x + w / 2, y + pad + 13 + i * gap, `${cls} mid`, s));
+  return { x, y, w, h, cx: x + w / 2, cy: y + h / 2, r: x + w, b: y + h };
 }
