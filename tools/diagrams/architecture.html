@@ -26,12 +26,13 @@
   }
 
   // 格子：幅 148・148・148・194、間 35。上段のカードは 3 行で高さをそろえる
-  const X0 = 29, W = [160, 160, 160, 160], G = (744 - 640) / 3;
+  // 格子は面の縁から 25px 内側。入れ子の帯（面の縁から 8px）の中でも、カードの周りに 17px 前後の余白が残る
+  const X0 = 37, W = [160, 160, 160, 160], G = (726 - 640) / 3;
   const cx = [X0];
   for (let i = 1; i < 4; i++) cx.push(cx[i - 1] + W[i - 1] + G);
   const PX = 12, PY = 100, PW = 776;
 
-  const Y1 = PY + 44, H1 = 86, CH = Y1 + H1 + 26, DBY = CH + 24, BY = DBY + 44 + 28, Y3 = BY + 18, H3 = 62, PH = Y3 + H3 + 18 - PY;
+  const Y1 = PY + 44, H1 = 86, CH = Y1 + H1 + 26, DBY = CH + 24, BY = DBY + 44 + 28, Y3 = BY + 18, H3 = 62, PH = Y3 + H3 + 26 - PY;
   // クラスタ（面）。カードより先に描く
   el(svg, 'rect', { class: 'pool', x: PX, y: PY, width: PW, height: PH, rx: 10 });
   // 見出しは 2 つとも左上。run.sh からの矢印は k6 の右寄り（kx）に入れて、見出しと交わらないようにする
@@ -55,37 +56,40 @@
 
   // 要求：k6 の色つきの行から、その色の線を出す。紫（/orders）だけが決済 API まで続く
   const yo = Y1 + 27 + 20 - 5, yp = yo + 20;
-  el(svg, 'line', { class: 'ln ord req main', x1: k6.r, y1: yo, x2: order.x - 2, y2: yo, 'marker-end': 'url(#h-ord)' });
-  el(svg, 'line', { class: 'ln prd req main', x1: k6.r, y1: yp, x2: order.x - 2, y2: yp, 'marker-end': 'url(#h-prd)' });
-  el(svg, 'line', { class: 'ln ord req main', x1: order.r, y1: yo, x2: toxi.x - 2, y2: yo, 'marker-end': 'url(#h-ord)' });
-  el(svg, 'line', { class: 'ln ord req main', x1: toxi.r, y1: yo, x2: pay.x - 2, y2: yo, 'marker-end': 'url(#h-ord)' });
+  el(svg, 'line', { class: 'ln ord req main', x1: k6.r, y1: yo, x2: order.x - 1, y2: yo, 'marker-end': 'url(#h-ord)' });
+  el(svg, 'line', { class: 'ln prd req main', x1: k6.r, y1: yp, x2: order.x - 1, y2: yp, 'marker-end': 'url(#h-prd)' });
+  el(svg, 'line', { class: 'ln ord req main', x1: order.r, y1: yo, x2: toxi.x - 1, y2: yo, 'marker-end': 'url(#h-ord)' });
+  el(svg, 'line', { class: 'ln ord req main', x1: toxi.r, y1: yo, x2: pay.x - 1, y2: yo, 'marker-end': 'url(#h-ord)' });
 
   // DB（order-api の真下）
   // /orders も /products も DB を使うので、k6 からの線と同じ色の 2 本で引く
   const db = card(order.cx - 55, DBY, 110, 44, [['name', 'PostgreSQL']]);
-  el(svg, 'line', { class: 'ln ord req main', x1: order.cx - 12, y1: order.b, x2: order.cx - 12, y2: db.y - 2, 'marker-end': 'url(#h-ord)' });
-  el(svg, 'line', { class: 'ln prd req main', x1: order.cx + 12, y1: order.b, x2: order.cx + 12, y2: db.y - 2, 'marker-end': 'url(#h-prd)' });
+  el(svg, 'line', { class: 'ln ord req main', x1: order.cx - 12, y1: order.b, x2: order.cx - 12, y2: db.y - 1, 'marker-end': 'url(#h-ord)' });
+  el(svg, 'line', { class: 'ln prd req main', x1: order.cx + 12, y1: order.b, x2: order.cx + 12, y2: db.y - 1, 'marker-end': 'url(#h-prd)' });
 
   // 観測：Prometheus と Grafana（Grafana が Prometheus に問い合わせる）
-  const prom = card(cx[2], Y3, W[2], H3, [['name', 'Prometheus'], ['small', 'localhost:9090']]);
-  const graf = card(cx[3], Y3, W[3], H3, [['name', 'Grafana'], ['small', 'localhost:3000']]);
-  el(svg, 'line', { class: 'ln thin ctl', x1: graf.x, y1: prom.cy, x2: prom.r + 2, y2: prom.cy, 'marker-end': 'url(#h-ctl)' });
+  const prom = card(cx[2], Y3, W[2], H3, [['name', 'Prometheus'], ['small', tr('localhost:9090 で開く', 'open localhost:9090')]]);
+  const graf = card(cx[3], Y3, W[3], H3, [['name', 'Grafana'], ['small', tr('localhost:3000 で開く', 'open localhost:3000')]]);
+  // Grafana が Prometheus に問い合わせる（観測系なので点線）
+  el(svg, 'line', { class: 'ln met', x1: graf.x, y1: prom.cy, x2: prom.r + 1, y2: prom.cy, 'marker-end': 'url(#h-met)' });
 
   // メトリクス：Prometheus から 1 本出て T 字に分かれ、order-api と payment-api の 8081 番を取りに行く。k6 は自分から送る
   // T 字の分かれ目は帯のすぐ上まで下げ、幹を短くする（Toxiproxy から離して、Toxiproxy を監視しているように読ませない）。左右は対称
   const TY = BY - 16, dl = order.r - 10, dr = pay.x + 10;
-  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${prom.y} V${TY} H${dl} V${order.b + 2}`, 'marker-end': 'url(#h-met)' });
-  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${TY} H${dr} V${pay.b + 2}`, 'marker-end': 'url(#h-met)' });
+  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${prom.y} V${TY} H${dl} V${order.b + 1}`, 'marker-end': 'url(#h-met)' });
+  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${TY} H${dr} V${pay.b + 1}`, 'marker-end': 'url(#h-met)' });
   text(svg, prom.cx, TY - 8, 'note mid', tr('1 秒ごとに :8081 を取りに行く', 'scrapes :8081 every second'));
   const kx = k6.r - 36;
-  el(svg, 'path', { class: 'ln met', d: `M${kx} ${k6.b} V${prom.cy} H${prom.x - 2}`, 'marker-end': 'url(#h-met)' });
-  text(svg, prom.x - 10, prom.cy - 8, 'note end', tr('結果を 2 秒ごとに送る', 'pushes results every 2 s'));
+  el(svg, 'path', { class: 'ln met', d: `M${kx} ${k6.b} V${prom.cy} H${prom.x - 1}`, 'marker-end': 'url(#h-met)' });
+  text(svg, (kx + prom.x) / 2, prom.cy - 8, 'note mid', tr('結果を 2 秒ごとに送る', 'pushes results every 2 s'));
 
   // run.sh からの操作
-  el(svg, 'line', { class: 'ln thin ctl', x1: kx, y1: host.b, x2: kx, y2: k6.y - 2, 'marker-end': 'url(#h-ctl)' });
+  el(svg, 'line', { class: 'ln thin ctl', x1: kx, y1: host.b, x2: kx, y2: k6.y - 1, 'marker-end': 'url(#h-ctl)' });
   text(svg, kx + 8, (host.b + PY) / 2 + 5, 'note', tr('負荷を開始', 'starts the load'));
-  el(svg, 'path', { class: 'ln thin ctl', d: `M${host.r} ${host.cy} H${toxi.cx} V${toxi.y - 2}`, 'marker-end': 'url(#h-ctl)' });
-  text(svg, cx[1], host.cy - 8, 'note', tr(':8474 で遅延を入れる・外す', 'adds / removes the delay via :8474'));
+  // Toxiproxy には中心から外して入れる（Prometheus からの点線と同じ縦の軸に乗せない）
+  const ex = toxi.x + 36;
+  el(svg, 'path', { class: 'ln thin ctl', d: `M${host.r} ${host.cy} H${ex} V${toxi.y - 1}`, 'marker-end': 'url(#h-ctl)' });
+  text(svg, (host.r + ex) / 2, host.cy - 8, 'note mid', tr(':8474 で遅延を入れる・外す', 'adds / removes the delay via :8474'));
 
   canvas(svg, 800, PY + PH + 12);
 </script>
