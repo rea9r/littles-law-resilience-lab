@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。効く場所に縦の切れ目を引き、シナリオの名前（README の表と同じ）を打つ。防御の位置は、3 つの資源が入れ子になっている上の段にまとめて描く（01b 以降は下の段の形で動く）。W は握る・待つ時間、L は同時に呼ぶ数、λ は 1 秒に呼ぶ数。棒の長さは模式で、比例していない -->
+<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は 00・01a の形、下の段は 01b 以降の形で、防御はそれを入れるシナリオの段に、シナリオの名前（README の表と同じ）で打つ。W は資源を握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
 <svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
 <script src="explainer.js"></script>
 <script>
@@ -47,45 +47,44 @@
     }
   }
 
-  // 1. 実験 0：決済 API をトランザクションの中で呼ぶ
-  text(svg, LX, 28, 'hl ord', tr('/orders 1 件：決済 API をトランザクションの中で呼ぶ（00・01a）', 'One /orders request: payment call inside the DB transaction (00, 01a)'));
+  // 1. 00・01a：決済 API をトランザクションの中で呼ぶ。コネクションを決済の待ちのあいだも握る
+  text(svg, LX, 28, 'hl ord', tr('00・01a：決済 API をトランザクションの中で呼ぶ', '00, 01a: payment call inside the DB transaction'));
   const Y1 = 46;
   lane(Y1, [[[0, 1, 'f-ord']], [[0.02, 0.12, 'f-ord-wait'], [0.12, 0.97, 'f-ord']], [[0.22, 0.9, 'f-ord']]]);
   text(svg, X(0.07), Y1 + 30, 'small mid', tr('取得待ち', 'waiting'));
   el(svg, 'path', { d: `M${X(0.22)} ${Y1 + 94} v6 H${X(0.9)} v-6`, fill: 'none', stroke: '#c03a33', 'stroke-width': 1.4 });
   text(svg, (X(0.22) + X(0.9)) / 2, Y1 + 118, 'small bad mid', tr('障害で 0.05 秒 → 5.05 秒', '0.05 s → 5.05 s during the fault'));
-  const RA = Y1 + 152;
-  mark(X(0.12), Y1 + 50, RA, '01b', 'W', tr('取得待ちの上限', 'connection-wait limit'), 'left');
-  mark(X(0.9), Y1 + 86, RA, '01a', 'W', tr('タイムアウト', 'timeout'), 'left');
+  mark(X(0.9), Y1 + 86, Y1 + 152, '01a', 'W', tr('タイムアウト', 'timeout'), 'left');
+
+  // 2. 01b 以降：決済 API を先に呼び、あとの短いトランザクション（INSERT）だけコネクションを握る（OrderService.kt）
+  const Y2 = Y1 + 206;
+  text(svg, LX, Y2, 'hl ord', tr('01b 以降：決済 API をトランザクションの外で呼ぶ', '01b onward: payment call outside the transaction'));
+  const L2 = Y2 + 18;
+  lane(L2, [[[0, 0.84, 'f-ord']], [[0.74, 0.76, 'f-ord-wait'], [0.76, 0.82, 'f-ord']], [[0.04, 0.72, 'f-ord']]]);
+  mark(X(0.79), L2 + GAP + 14, L2 + 116, '01b', 'W', tr('取得待ちを打ち切り、トランザクションを短くする', 'cut the connection wait, shorten the transaction'), 'left');
   // 呼び出しを包む 3 つ（上から外側 → 内側。PaymentClient の Retry(CircuitBreaker(Bulkhead(呼び出し)))）
-  const RB = RA + 36;
-  el(svg, 'line', { class: 'cut', x1: X(0.22), y1: Y1 + 86, x2: X(0.22), y2: RB + 52 });
+  const RB = L2 + 160;
+  el(svg, 'line', { class: 'cut', x1: X(0.04), y1: L2 + 2 * GAP + 14, x2: X(0.04), y2: RB + 52 });
   [['03a', '', tr('リトライ（外側。W と λ が増える）', 'retry (outermost; raises W and λ)')],
    ['03b', 'λ', tr('サーキットブレーカー', 'circuit breaker')],
    ['02b', 'L', tr('バルクヘッド（内側）', 'bulkhead (innermost)')]].forEach(([id, letter, name], i) => {
     const y = RB + i * 28;
-    pill(X(0.22), y, id);
-    let cx = X(0.22) + 28;
+    pill(X(0.04), y, id);
+    let cx = X(0.04) + 28;
     if (letter) cx = text(svg, cx, y + 5, 'lbl', letter) + 6;
     text(svg, cx, y + 5, 'body', name);
   });
-
-  // 2. トランザクションの外で呼ぶ（01b から）
-  const Y2 = RB + 112;
-  text(svg, LX, Y2, 'hl ord', tr('/orders 1 件：決済 API をトランザクションの外で呼ぶ（01b 以降）', 'One /orders request: payment call outside the transaction (01b onward)'));
-  // 決済 API を先に呼び、そのあとの短いトランザクション（INSERT）だけコネクションを握る（OrderService.kt）
-  lane(Y2 + 18, [[[0, 0.82, 'f-ord']], [[0.74, 0.8, 'f-ord']], [[0.04, 0.72, 'f-ord']]]);
-  mark(X(0.77), Y2 + 18 + GAP + 14, Y2 + 152, '01b', 'W', tr('トランザクションを短くする', 'shorter transaction'), 'left');
+  const Y2END = RB + 60;
 
   // 凡例：色と、W・L・λ
-  const LY = Y2 + 198;
+  const LY = Y2END + 40;
   let lx = LX;
   for (const [cls, s] of [['f-ord', tr('握っている', 'held')], ['f-ord-wait', tr('空きを待っている', 'waiting')]]) {
     el(svg, 'rect', { class: cls, x: lx, y: LY - 11, width: 13, height: 13 });
     lx = text(svg, lx + 20, LY, 'body', s) + 28;
   }
   lx = LX;
-  for (const [m, s] of [['W', tr('握る・待つ時間', 'time held or waited')], ['L', tr('同時に呼ぶ数', 'calls at once')], ['λ', tr('1 秒に呼ぶ数', 'calls per second')]]) {
+  for (const [m, s] of [['W', tr('資源を握る・待つ時間', 'time a resource is held or waited for')], ['L', tr('決済 API を同時に呼ぶ数', 'concurrent payment calls')], ['λ', tr('決済 API を 1 秒に呼ぶ数', 'payment calls per second')]]) {
     lx = text(svg, lx, LY + 26, 'lbl', m) + 5;
     lx = text(svg, lx, LY + 26, 'body', s) + 22;
   }

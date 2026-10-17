@@ -25,18 +25,17 @@
   const k6 = box(svg, COL.k6[0], Y1, COL.k6[1], [['name', 'k6'], ['small ord b', tr('/orders 60 件/秒', '/orders 60 req/s')], ['small prd b', tr('/products 10 件/秒', '/products 10 req/s')]]);
   const order = box(svg, COL.order[0], Y1, COL.order[1], [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('コネクション 10 本', '10 DB connections')]], { stroke: '#19191c', width: 2 });
   const toxi = box(svg, COL.toxi[0], Y1, COL.toxi[1], [['name', 'Toxiproxy'], ['small bad', tr('障害中は応答を', 'delays responses')], ['small bad', tr('5 秒遅らせる', 'by 5 s (fault)')]], { stroke: '#c03a33', width: 2 });
-  const pay = box(svg, COL.pay[0], Y1, COL.pay[1], [['name', 'payment-api'], ['small', tr('決済 API のモック', 'payment API mock')], ['small', tr('平均 50 ms・p99 120 ms', 'mean 50 ms · p99 120 ms')], ['small', tr('スレッド 6 本', '6 threads')]]);
+  const pay = box(svg, COL.pay[0], Y1, COL.pay[1], [['name', 'payment-api'], ['small', tr('決済 API のモック', 'payment API mock')], ['small', tr('平均 0.05 秒・p99 0.12 秒', 'mean 0.05 s · p99 0.12 s')], ['small', tr('スレッド 6 本', '6 threads')]]);
 
   // 下段
   const db = box(svg, COL.order[0], Y2, COL.order[1], [['name', 'PostgreSQL']]);
-  const prom = box(svg, COL.toxi[0] - 12, Y2, COL.toxi[1] + 24, [['name', 'Prometheus'], ['small', 'localhost:9090']]);
-  const graf = box(svg, COL.pay[0], Y2, COL.pay[1], [['name', 'Grafana'], ['small', 'localhost:3000']]);
+  const prom = box(svg, COL.toxi[0] - 12, Y2, COL.toxi[1] + 24, [['name', 'Prometheus'], ['small', tr('localhost:9090 で開ける', 'open at localhost:9090')]]);
+  const graf = box(svg, COL.pay[0], Y2, COL.pay[1], [['name', 'Grafana'], ['small', tr('localhost:3000 で開ける', 'open at localhost:3000')]]);
 
   // 要求の経路
   const ky = Y1 + 34;
   el(svg, 'line', { class: 'ln', x1: k6.r, y1: ky, x2: order.x - 3, y2: ky, 'marker-end': 'url(#arrow)' });
   el(svg, 'line', { class: 'ln ord', x1: order.r, y1: ky, x2: toxi.x - 3, y2: ky, 'marker-end': 'url(#arrow-ord)' });
-  text(svg, (order.r + toxi.x) / 2, ky - 8, 'small ord mid', tr('決済', 'payment'));
   el(svg, 'line', { class: 'ln ord', x1: toxi.r, y1: ky, x2: pay.x - 3, y2: ky, 'marker-end': 'url(#arrow-ord)' });
   el(svg, 'line', { class: 'ln', x1: order.cx - 30, y1: order.b, x2: order.cx - 30, y2: db.y - 3, 'marker-end': 'url(#arrow)' });
   // Grafana が Prometheus に問い合わせる（矢印は始める側から）
@@ -60,6 +59,9 @@
   const KY = 442;
   el(svg, 'path', { class: 'ln thin dot', d: `M${k6.cx} ${k6.b} V${KY} H${prom.cx} V${prom.b + 3}`, 'marker-end': 'url(#arrow-light)' });
   text(svg, k6.cx + 8, KY - 8, 'small', tr('結果を 2 秒ごとに送る', 'pushes results every 2 s'));
+  // 凡例：紫の線は /orders の決済 API の呼び出しだけが通る
+  el(svg, 'line', { class: 'ln ord', x1: 540, y1: 448, x2: 572, y2: 448 });
+  text(svg, 580, 453, 'small', tr('/orders の決済 API の呼び出し', 'payment calls from /orders'));
   canvas(svg, 800, 476);
 </script>
 </body>

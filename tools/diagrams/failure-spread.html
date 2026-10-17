@@ -35,10 +35,10 @@
 
     // 到着：何をするエンドポイントかを名前の下に添える。2 本の矢印を 1 点に合流させる（エンドポイントごとの列はない）
     const oEnd = text(svg, 20, Y + 96, 'lbl ord', tr('/orders 60 件/秒', '/orders 60 req/s'));
-    text(svg, 20, Y + 115, 'small', tr('決済 API を呼ぶ', 'calls the payment API'));
+    const oSub = text(svg, 20, Y + 115, 'small', tr('決済 API を呼ぶ', 'calls the payment API'));
     const pEnd = text(svg, 20, Y + 144, 'lbl prd', tr('/products 10 件/秒', '/products 10 req/s'));
-    text(svg, 20, Y + 163, 'small', tr('DB を読むだけ', 'only reads the DB'));
-    const MX = Math.max(oEnd, pEnd) + 26, MY = Y + 122;
+    const pSub = text(svg, 20, Y + 163, 'small', tr('DB を読むだけ', 'only reads the DB'));
+    const MX = Math.max(oEnd, pEnd, oSub, pSub) + 18, MY = Y + 122;
     el(svg, 'path', { class: 'ln ord', d: `M${oEnd + 8} ${Y + 91} H${MX - 18} L${MX} ${MY}` });
     el(svg, 'path', { class: 'ln prd', d: `M${pEnd + 8} ${Y + 139} H${MX - 18} L${MX} ${MY}` });
     if (!fault) {

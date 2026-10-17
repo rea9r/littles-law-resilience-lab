@@ -367,12 +367,22 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#8a8a92"
+                  "fixedColor": "#303036"
                 }
               },
               {
                 "id": "custom.lineWidth",
                 "value": 2.5
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dot",
+                  "dash": [
+                    0,
+                    6
+                  ]
+                }
               }
             ]
           },
