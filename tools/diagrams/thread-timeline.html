@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Thread timeline</title>
+<link rel="stylesheet" href="explainer.css">
+</head>
+<body>
+<!-- スレッド 40 本を 40 行に並べ、/orders 1 件を棒 1 本で描く。到着を等間隔にした計算で、実測ではない。読み方・計算の前提・実測との比べは本文（記事と README）に書く -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>
+  const svg = document.getElementById('fig');
+  defs(svg);
+
+  // 計算の前提：/orders 60 件/秒・/products 10 件/秒を等間隔に到着させる。決済は 0 秒から 0.05 秒 → 5.05 秒
+  // 平常時の行の並びが落ち着いてから描くよう、描き始め（T0）より前から計算する
+  const TS = -2, T0 = -0.6, T1 = 2.0, THREADS = 40;
+  const ORDERS_RATE = 60, PRODUCTS_RATE = 10;
+  const round = (t) => Math.round(t * 1e9) / 1e9;
+  const holdTime = (start, kind) => {
+    if (kind === 'p') return 0.005;
+    return start + 0.05 <= 0 ? 0.05 : 5.05;
+  };
+
+  // 事象を時刻の順に処理する。同じ時刻なら、解放を到着より先に処理する
+  const events = [];
+  const orderArrivals = [];
+  for (let i = 0; TS + i / ORDERS_RATE <= T1; i++) orderArrivals.push(round(TS + i / ORDERS_RATE + 1 / 120));
+  for (const t of orderArrivals) events.push({ t, type: 1, kind: 'o' });
+  for (let i = 0; TS + i / PRODUCTS_RATE <= T1; i++) events.push({ t: round(TS + i / PRODUCTS_RATE + 0.031), type: 1, kind: 'p' });
+  const free = Array.from({ length: THREADS }, (_, i) => i);
+  const waiting = [], bars = [], queued = [];
+  const push = (e) => { events.push(e); events.sort((a, b) => a.t - b.t || a.type - b.type); };
+  events.sort((a, b) => a.t - b.t || a.type - b.type);
+  const start = (row, t, kind) => {
+    const end = round(t + holdTime(t, kind));
+    bars.push({ row, s: t, e: end, kind });
+    push({ t: end, type: 0, row });
+  };
+  while (events.length && events[0].t <= T1) {
+    const ev = events.shift();
+    if (ev.type === 0) {
+      if (waiting.length) start(ev.row, ev.t, waiting.shift().kind);
+      else { free.push(ev.row); free.sort((a, b) => a - b); }
+    } else if (free.length) {
+      start(free.shift(), ev.t, ev.kind);
+    } else {
+      waiting.push(ev);
+      queued.push(ev);
+    }
+  }
+  const crossing = (t) => bars.filter((b) => b.kind === 'o' && b.s <= t && t < b.e).length;
+  const heldAtFault = bars.filter((b) => b.s < 0 && 0 <= b.e && b.e - b.s > 1).length;
+  const fullAt = Math.min(...bars.filter((b) => b.row === THREADS - 1 && b.s >= 0).map((b) => b.s));
+  const queuedOrders = queued.filter((q) => q.kind === 'o').length;
+  const queuedProducts = queued.length - queuedOrders;
+  const uncappedAt1 = heldAtFault + orderArrivals.filter((t) => 0 <= t && t <= 1).length;
+
+  // 描く位置
+  const X0 = 86, PX = 230, ROW = 7, FY = 232;
+  const x = (t) => X0 + (t - T0) * PX;
+  const XE = x(T1), FB = FY + ROW * THREADS;
+
+  // スレッドの行：空いている時間は白、10 本ごとに薄い線（棒の下に敷く）。障害の始まりも棒の下に敷く
+  el(svg, 'rect', { class: 'f-free', x: X0, y: FY, width: XE - X0, height: ROW * THREADS });
+  for (const k of [10, 20, 30]) el(svg, 'line', { class: 'row-grid', x1: X0, y1: FY + k * ROW, x2: XE, y2: FY + k * ROW });
+  el(svg, 'line', { class: 'ln bad', x1: x(0), y1: 24, x2: x(0), y2: FB });
+  text(svg, x(0) + 6, 36, 'lbl bad', tr('ここから決済 API が 0.05 秒 → 5.05 秒', 'From here, the payment API takes 5.05 s instead of 0.05 s'));
+  for (const b of bars) {
+    if (b.kind !== 'o' || b.e <= T0) continue;
+    const s = Math.max(b.s, T0), e = Math.min(b.e, T1);
+    const w = Math.max(2, (e - s) * PX - (b.e > T1 ? 0 : 1.5));
+    el(svg, 'rect', { class: 'f-ord', x: x(s), y: FY + b.row * ROW + 1, width: w, height: ROW - 2 });
+  }
+  text(svg, XE + 8, FY + 128, 'small', tr('→ 障害後の棒は', '→ each new bar'));
+  text(svg, XE + 8, FY + 147, 'small', tr('5.05 秒続く', 'lasts 5.05 s'));
+  // 行はスレッドの番号（何本目か）。縦に切って交わる棒を、上から何本目まで数えるかで L が読める
+  for (const k of [10, 20, 30, 40]) text(svg, X0 - 8, FY + k * ROW + 5, 'small end', tr(`${k} 本目`, `#${k}`));
+
+  // 空きを待つ列（スレッドを持たないので薄い色。下が /orders、上が /products）
+  const QB = FY - 22, QS = 1;
+  const area = (onlyOrders) => {
+    let n = 0, d = `M${x(fullAt)} ${QB}`;
+    for (const q of queued) {
+      d += ` L${x(q.t)} ${QB - n * QS}`;
+      if (!onlyOrders || q.kind === 'o') n++;
+      d += ` L${x(q.t)} ${QB - n * QS}`;
+    }
+    return `${d} L${XE} ${QB - n * QS} L${XE} ${QB} Z`;
+  };
+  el(svg, 'path', { class: 'f-prd-wait', d: area(false) });
+  el(svg, 'path', { class: 'f-ord-wait', d: area(true) });
+  el(svg, 'line', { class: 'axis', x1: x(fullAt), y1: QB, x2: XE, y2: QB });
+  el(svg, 'line', { class: 'grid', x1: x(fullAt), y1: QB - 100 * QS, x2: XE, y2: QB - 100 * QS });
+  text(svg, x(fullAt) - 6, QB + 5, 'small end', '0');
+  text(svg, x(fullAt) - 6, QB - 100 * QS + 5, 'small end', tr('100 件', '100'));
+  text(svg, XE + 6, QB - queued.length * QS + 4, 'small prd b', `/products ${queuedProducts}`);
+  text(svg, XE + 6, QB - (queuedOrders * QS) / 2 + 6, 'small ord b', `/orders ${queuedOrders}`);
+  text(svg, x(fullAt), 66, 'lbl', tr('空きを待つ列（先着順）', 'Queue (FIFO)'));
+  text(svg, x(fullAt), 86, 'small', tr(
+    `${fullAt.toFixed(1)} 秒から 1 秒に 70 件ずつ増え、2.0 秒で ${queued.length} 件`,
+    `grows by 70/s after ${fullAt.toFixed(1)} s (${queued.length} by 2.0 s)`));
+
+  // 時間の軸
+  el(svg, 'line', { class: 'axis', x1: X0, y1: FB, x2: XE, y2: FB });
+  for (const t of [-0.5, 0, 0.5, 1, 1.5, 2]) {
+    el(svg, 'line', { class: 'axis', x1: x(t), y1: FB, x2: x(t), y2: FB + 5 });
+    text(svg, x(t), FB + 21, 'small mid', t === 0 ? '0' : t.toFixed(1));
+  }
+  text(svg, XE, FB + 42, 'small end', tr('障害からの時間（秒）', 'time since the fault (s)'));
+
+  // 満杯になるまで
+  el(svg, 'path', { d: `M${x(0)} ${FB + 30} v6 H${x(fullAt)} v-6`, fill: 'none', stroke: '#c03a33', 'stroke-width': 1.4 });
+  text(svg, x(0), FB + 56, 'lbl bad', tr(`約 ${fullAt.toFixed(1)} 秒で 40 本が満杯`, `All 40 busy in about ${fullAt.toFixed(1)} s`));
+  text(svg, x(0), FB + 75, 'small bad', tr(`空いていた ${THREADS - heldAtFault} 本 ÷ 60 件/秒`, `${THREADS - heldAtFault} idle threads ÷ 60 req/s`));
+
+  // 縦の切り口
+  const cuts = [
+    [-0.3, [tr(`この線と交わる棒は ${crossing(-0.3)} 本（L）`, `This line crosses ${crossing(-0.3)} bars (L)`),
+            tr('≈ 60 件/秒（λ）× 0.05 秒（W）', '≈ 60 req/s (λ) × 0.05 s (W)')]],
+    [1.0, [tr(`この線と交わる棒は ${crossing(1.0)} 本（L ＝ 上限）`, `This line crosses ${crossing(1.0)} bars (L = 40, the cap)`),
+           tr(`上限がなければ ${uncappedAt1} 本`, `Without the limit: ${uncappedAt1}`),
+           tr(`（障害の前からの ${heldAtFault} 本 + 60 件/秒 × 1 秒）`, `(${heldAtFault} in flight + 60 req/s × 1 s)`)]],
+  ];
+  for (const [t, lines] of cuts) {
+    // 軸の数字の上は通らない
+    // 列の帯がある時刻なら、帯の上まで伸ばして時間をそろえて見せる
+    el(svg, 'line', { class: 'cut', x1: x(t), y1: t > fullAt ? QB - 100 * QS : FY, x2: x(t), y2: FB + 6 });
+    el(svg, 'line', { class: 'cut', x1: x(t), y1: FB + 28, x2: x(t), y2: FB + 92 });
+    lines.forEach((s, i) => text(svg, x(t) - 4, FB + 110 + i * 20, i === 0 ? 'lbl' : 'small', s));
+  }
+
+  // 凡例（幅に収まらなければ折り返す）
+  const LY = FB + 186;
+  let lx = 20, ly = LY;
+  const legend = [
+    ['f-ord', tr('スレッドを握っている /orders（棒 1 本が 1 件）', '/orders holding a thread (one bar = one request)')],
+    ['f-ord-wait', tr('空きを待つ /orders', '/orders in the queue')],
+    ['f-prd-wait', tr('空きを待つ /products', '/products in the queue')],
+  ];
+  for (const [cls, s] of legend) {
+    const g = el(svg, 'g');
+    el(g, 'rect', { class: cls, x: 0, y: -11, width: 13, height: 13 });
+    const w = text(g, 20, 0, 'body', s);
+    if (lx > 20 && lx + w > 780) { lx = 20; ly += 24; }
+    g.setAttribute('transform', `translate(${lx} ${ly})`);
+    lx += w + 30;
+  }
+  canvas(svg, 800, ly + 16);
+  document.title += ` held=${heldAtFault} full=${fullAt.toFixed(3)} queued=${queued.length}/${queuedProducts} cut=${crossing(-0.3)},${crossing(1.0)} uncapped=${uncappedAt1} at0.4=${crossing(0.4)}`;
+</script>
+</body>
+</html>

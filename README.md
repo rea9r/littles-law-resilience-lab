@@ -11,6 +11,20 @@ When the payment API slows down, APIs that never call it stop too. This lab pred
 
 ![What is shared inside order-api](docs/images/order-api-resources.en.png)
 
+## What goes wrong
+
+With no defenses enabled (scenario `00-no-defense`), every endpoint of order-api shares the same 40 Tomcat threads. Normally the payment API responds in 0.05 s, so by Little's Law `/orders` keeps about 3 threads busy (60 req/s × 0.05 s). When Toxiproxy adds 5 s of latency, `/orders` would need about 300 threads at once. Once all 40 are busy, new requests wait in a single FIFO queue inside Tomcat, regardless of endpoint. `/products`, which never calls the payment API, sits in that queue until k6 gives up at its own 5 s timeout (a client setting, unrelated to the injected delay). `/livez` is stuck in the same queue, so the liveness probe fails and Kubernetes restarts the Pod.
+
+![How the failure spreads](docs/images/failure-spread.en.png)
+
+The 10 DB connections run out too, and even sooner. `/orders` calls the payment API inside a DB transaction, so each request also holds a connection for the full 5.05 s, and with only 10 of them the connections are gone before the threads. After that, a `/products` request that gets a thread blocks waiting for a connection, so it holds the thread as well.
+
+The 300 above is steady-state demand: without the limit, demand would grow by 60 every second and reach about 300 only after 5 s, and busy threads never get there because the pool is capped at 40. What matters is how fast the 40 fill up. The chart below is a calculation, not a measurement: each row is one thread and each bar one `/orders` request, with evenly spaced arrivals and threads only. The 37 idle threads are used up in about 37 ÷ 60 ≈ 0.6 s.
+
+![Threads filling up right after the fault](docs/images/thread-timeline.en.png)
+
+Metrics are sampled about once a second. In one run, the first sample after the fault (0.48 s) already showed all 40 threads busy, a little earlier than the chart: once the connections are gone, `/products` holds threads too, which brings the estimate down to about 0.55 s. In the other run, 24 threads were busy at 0.40 s (the chart says 27), and the next sample, at 1.40 s, showed all 40.
+
 ## Requirements
 
 - Docker Desktop with at least 4 GB of memory
@@ -52,7 +66,7 @@ Deletes the cluster.
 
 | Scenario | What changes | What it shows |
 |---|---|---|
-| `00-no-defense` | No defense: 30 s timeout, the payment call inside the DB transaction | Threads run out in under a second and `/products` goes down too |
+| `00-no-defense` | No defense: 30 s timeout, the payment call inside the DB transaction | Threads run out in about a second and `/products` goes down too |
 | `01a-timeout` | Timeout cut to 300 ms | Waiting for a DB connection becomes the new W, so it still goes down |
 | `01b-tx-boundary` | Payment call moved out of the transaction, 250 ms connection timeout | Threads settle around 60 × 0.3 + α ≈ 20 |
 | `02a-no-window` | Payment API p99 raised to 600 ms, timeout 800 ms | With no valid timeout window, threads run out |

@@ -29,7 +29,7 @@
         },
         "enable": true,
         "hide": false,
-        "iconColor": "rgba(138, 56, 245, 1)",
+        "iconColor": "rgba(110, 110, 115, 0.9)",
         "name": "order-api の再起動",
         "expr": "max(process_uptime_seconds{job=\"order-api\"}) < 10",
         "step": "1s",
@@ -66,7 +66,56 @@
           "min": 0,
           "max": 45
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "使用中のスレッド"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6a55d6"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "上限（maxThreads）"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8a8a92"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1.5
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    6
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -83,9 +132,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(tomcat_threads_busy_threads{job=\"order-api\"})",
-          "legendFormat": "使用中のスレッド",
-          "refId": "A",
+          "expr": "max(tomcat_threads_config_max_threads{job=\"order-api\"})",
+          "legendFormat": "上限（maxThreads）",
+          "refId": "B",
           "range": true
         },
         {
@@ -93,9 +142,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(tomcat_threads_config_max_threads{job=\"order-api\"})",
-          "legendFormat": "上限（maxThreads）",
-          "refId": "B",
+          "expr": "max(tomcat_threads_busy_threads{job=\"order-api\"})",
+          "legendFormat": "使用中のスレッド",
+          "refId": "A",
           "range": true
         }
       ]
@@ -247,7 +296,75 @@
           },
           "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "使用中"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6a55d6"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "取得待ち"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#a898ec"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "上限"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8a8a92"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1.5
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    6
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -259,6 +376,16 @@
         }
       },
       "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(hikaricp_connections_max{job=\"order-api\"})",
+          "legendFormat": "上限",
+          "refId": "C",
+          "range": true
+        },
         {
           "datasource": {
             "type": "prometheus",
@@ -277,16 +404,6 @@
           "expr": "max(hikaricp_connections_pending{job=\"order-api\"})",
           "legendFormat": "取得待ち",
           "refId": "B",
-          "range": true
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "max(hikaricp_connections_max{job=\"order-api\"})",
-          "legendFormat": "上限",
-          "refId": "C",
           "range": true
         }
       ]

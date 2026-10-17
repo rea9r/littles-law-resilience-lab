@@ -1,0 +1,44 @@
+/* 記事と README の解説図（failure-spread・thread-timeline）の共通の見た目。Zenn の本文の幅 700px に縮めても 12px 以上で読めるよう、文字は 14px 以上にする */
+html, body { margin: 0; background: #ffffff; }
+svg {
+  display: block;
+  /* 英字とギリシャ文字（λ）は欧文の書体で描く（和文の書体だと λ が全角になって間が空く） */
+  font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+}
+
+/* 文字 */
+.lead { font-size: 16px; font-weight: 700; fill: #19191c; }
+.sub { font-size: 14px; fill: #44444a; }
+.hl { font-size: 16px; font-weight: 700; fill: #19191c; }
+.tag { font-size: 14px; font-weight: 700; }
+.lbl { font-size: 14px; font-weight: 700; }
+.body { font-size: 14px; fill: #303036; }
+.small { font-size: 14px; fill: #44444a; }
+.big { font-size: 28px; font-weight: 700; }
+.b { font-weight: 700; }
+.end { text-anchor: end; }
+.mid { text-anchor: middle; }
+
+/* 役割の色：紫＝/orders、青緑＝/products、赤＝障害と足りない分。スレッドを握っていれば濃い色、空きを待っていれば薄い色 */
+.ord { fill: #5342a2; }
+.prd { fill: #00697c; }
+.bad { fill: #c03a33; }
+.f-ord { fill: #6a55d6; }
+.f-ord-wait { fill: #c3b9f2; }
+.f-prd-wait { fill: #86cbd4; }
+.f-free { fill: #ffffff; stroke: #b4b4bc; stroke-width: 1; }
+
+/* 部品 */
+.pool { fill: #efeff3; }
+.slot { fill: #ffffff; stroke: #b4b4bc; stroke-width: 1.2; }
+.slot.used { fill: #6a55d6; stroke: #6a55d6; }
+.ln { stroke: #6e6e73; stroke-width: 1.6; fill: none; }
+.ln.ord { stroke: #5342a2; fill: none; }
+.ln.prd { stroke: #00697c; fill: none; }
+.ln.bad { stroke: #c03a33; stroke-width: 2; fill: none; }
+.cut { stroke: #19191c; stroke-width: 1.2; stroke-dasharray: 4 3; }
+.axis { stroke: #b4b4bc; stroke-width: 1; }
+.grid { stroke: #8a8a92; stroke-width: 1; stroke-dasharray: 2 3; }
+.row-grid { stroke: #e2e2e8; stroke-width: 1; }
+.cap { fill: none; stroke: #19191c; stroke-width: 1.4; }
+.over { fill: url(#hatch); stroke: #c03a33; stroke-width: 1; }

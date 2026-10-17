@@ -1,6 +1,6 @@
 // tools/diagrams/*.html を日本語版と英語版の PNG に書き出す（docs/images/<名前>.<ja|en>.png）
 // svg に data-themes があれば、テーマごとにも書き出す（docs/images/<名前>.<テーマ>.<ja|en>.png）
-// 使い方: node tools/render-diagrams.mjs
+// 使い方: node tools/render-diagrams.mjs [名前 ...]（名前を渡すと、その図だけを書き出す。例: failure-spread thread-timeline）
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -16,7 +16,9 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: true 
 try {
   const page = await browser.newPage();
   await page.setViewport({ width: 1400, height: 900, deviceScaleFactor: 2 });
-  for (const file of fs.readdirSync(srcDir).filter((f) => f.endsWith('.html'))) {
+  const only = process.argv.slice(2);
+  const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.html') && (only.length === 0 || only.includes(path.basename(f, '.html'))));
+  for (const file of files) {
     const html = fs.readFileSync(path.join(srcDir, file), 'utf8');
     const themes = html.match(/data-themes="([^"]+)"/)?.[1].split(' ') ?? [null];
     for (const theme of themes) {

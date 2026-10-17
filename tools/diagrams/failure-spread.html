@@ -2,101 +2,78 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>Failure spread (explainer)</title>
-<link rel="stylesheet" href="skill.css">
+<title>Failure spread</title>
+<link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<!-- 解説図（explain-as-slides の b52 の作法）。レーンは 呼ぶ側 0〜110・order-api 160〜400・決済 API 450〜550、番号の列は x=574。
-     升目は 1 個 14×14・間 4（8 列 × 5 段 = 40 本）。段は ① 122・② 230・③ 340・④ 410・⑤ 574 -->
-<svg class="fig" width="800" height="640" viewBox="0 0 800 640" xmlns="http://www.w3.org/2000/svg" data-themes="light dark">
-  <defs>
-    <marker id="fig-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"/></marker>
-    <marker id="fig-arrow-key" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker>
-  </defs>
-  <rect class="bg" width="800" height="640"/>
-
-  <!-- レーン -->
-  <rect class="lane" x="0" y="0" width="110" height="640"/><rect class="lane-bar" x="0" y="0" width="110" height="4"/>
-  <text class="t lane-t" x="12" y="32" data-en="Callers">呼ぶ側</text>
-  <rect class="lane" x="160" y="0" width="240" height="640"/><rect class="lane-bar tone-violet" x="160" y="0" width="240" height="4"/>
-  <text class="t tone-violet lane-t" x="176" y="32">order-api</text>
-  <rect class="lane" x="450" y="0" width="100" height="640"/><rect class="lane-bar tone-teal" x="450" y="0" width="100" height="4"/>
-  <text class="t tone-teal lane-t" x="462" y="32" data-en="Payment">決済 API</text>
-
-  <!-- 障害中の区間 -->
-  <rect class="zone tone-orchid" x="0" y="200" width="550" height="440"/>
-  <text class="zone-t tone-orchid" x="66" y="226" data-en="During the fault">障害中</text>
-
-  <!-- 呼ぶ側 -->
-  <rect class="box" x="10" y="62" width="90" height="36"/><text class="t mid" x="55" y="80">k6</text>
-  <rect class="box" x="10" y="556" width="90" height="36"/><text class="t mid" x="55" y="574">kubelet</text>
-
-  <!-- ① 平常時：スレッドは約 3 本 -->
-  <rect class="box tone-violet" x="176" y="56" width="208" height="132"/>
-  <text class="t tone-violet mid" x="280" y="76" data-en="Threads (normal)">スレッド（平常時）</text>
-  <g id="slots-normal"></g>
-  <line class="ln to" x1="100" y1="80" x2="174" y2="80"/><text class="n mid" x="137" y="66">70 rps</text>
-  <line class="ln to" x1="384" y1="120" x2="448" y2="120"/><text class="n mid" x="416" y="106" data-en="pay">決済</text>
-  <rect class="chip" x="394" y="126" width="44" height="22"/><text class="chip-t" x="416" y="137">50ms</text>
-
-  <!-- ② 決済 API に +5 秒 -->
-  <rect class="box tone-orchid" x="455" y="212" width="90" height="36"/><text class="t tone-orchid mid" x="500" y="230">Toxiproxy</text>
-  <text class="n mid" x="500" y="266" data-en="+5 s">+5 秒</text>
-
-  <!-- ③ 障害時：40 本すべてが埋まる -->
-  <rect class="box tone-violet" x="176" y="290" width="208" height="132"/>
-  <text class="t tone-violet mid" x="280" y="310" data-en="Threads (fault)">スレッド（障害時）</text>
-  <g id="slots-fault"></g>
-  <line class="ln to" x1="384" y1="340" x2="448" y2="340"/><text class="n mid" x="416" y="326" data-en="wait 5 s">5 秒待つ</text>
-
-  <!-- ④ /products も空きを待つ -->
-  <path class="ln to" d="M55 98 V410 H174"/><text class="n mid" x="118" y="396">/products</text>
-
-  <!-- ⑤ /livez も応答できない -->
-  <rect class="box" x="235" y="556" width="90" height="36"/><text class="t m mid" x="280" y="574">/livez</text>
-  <line class="ln to" x1="100" y1="574" x2="233" y2="574"/><text class="n mid" x="166" y="560" data-en="probe">確認</text>
-  <line class="ln dash to" x1="280" y1="556" x2="280" y2="424"/><text class="n sm" x="290" y="494" data-en="waits for a thread">スレッドを待つ</text>
-
-  <!-- 番号と注釈 -->
-  <circle class="step" cx="574" cy="122" r="12"/><text class="step-n" x="574" y="122">1</text>
-  <text class="ann-t" x="594" y="118" data-en="Normal: about 3">平常時は約 3 本</text>
-  <text class="ann" x="594" y="136" data-en="60 rps × 0.05 s ≈ 3">60 rps × 0.05 秒 ≈ 3</text>
-  <text class="ann" x="594" y="153" data-en="under 10% of the 40">上限 40 本の 1 割弱</text>
-
-  <circle class="step" cx="574" cy="230" r="12"/><text class="step-n" x="574" y="230">2</text>
-  <text class="ann-t" x="594" y="226" data-en="Payment slows down">決済 API が遅れる</text>
-  <text class="ann" x="594" y="244" data-en="Toxiproxy delays every">Toxiproxy が応答を</text>
-  <text class="ann" x="594" y="261" data-en="answer by 5 s">5 秒ずつ遅らせる</text>
-
-  <circle class="step" cx="574" cy="340" r="12"/><text class="step-n" x="574" y="340">3</text>
-  <text class="ann-t" x="594" y="336" data-en="Gone in 0.7 s">0.7 秒で尽きる</text>
-  <text class="ann" x="594" y="354" data-en="needs 60 × 5 = 300">要るのは 60×5 = 300 本</text>
-  <text class="ann" x="594" y="371" data-en="40 fill up in 0.7 s">40 本は 0.7 秒で埋まる</text>
-
-  <circle class="step" cx="574" cy="410" r="12"/><text class="step-n" x="574" y="410">4</text>
-  <text class="ann-t" x="594" y="406" data-en="Others stop too">関係ない API も止まる</text>
-  <text class="ann" x="594" y="424" data-en="/products waits for a">/products も空きを待ち</text>
-  <text class="ann" x="594" y="441" data-en="thread and times out">5 秒で失敗する</text>
-
-  <circle class="step" cx="574" cy="574" r="12"/><text class="step-n" x="574" y="574">5</text>
-  <text class="ann-t" x="594" y="570" data-en="Restart loop">再起動が続く</text>
-  <text class="ann" x="594" y="588" data-en="/livez cannot answer,">/livez も応答できず</text>
-  <text class="ann" x="594" y="605" data-en="so the Pod restarts">Pod が再起動する</text>
-</svg>
+<!-- 平常時と障害時を同じ形で上下に並べる。左から 到着 → 空きを待つ列 → スレッド 40 本 → 同時に要る本数 L と上限の比べ。前提・結果・断り書きは本文（記事と README）に書く -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
 <script>
-  // 升目：14×14、間 4、8 列 × 5 段。平常時は 3 本、障害時は 40 本すべてが使用中
-  const NS = 'http://www.w3.org/2000/svg';
-  for (const [id, x0, y0, used] of [['slots-normal', 210, 92, 3], ['slots-fault', 210, 326, 40]]) {
-    const g = document.getElementById(id);
-    for (let i = 0; i < 40; i++) {
-      const r = document.createElementNS(NS, 'rect');
-      r.setAttribute('x', x0 + (i % 8) * 18); r.setAttribute('y', y0 + Math.floor(i / 8) * 18);
-      r.setAttribute('width', 14); r.setAttribute('height', 14);
-      r.setAttribute('class', `slot tone-violet${i < used ? ' used' : ''}`);
-      g.appendChild(r);
+  const svg = document.getElementById('fig');
+  defs(svg);
+  const W = 800;
+  const POOL_X = 316, COL_X = 604, GAUGE_W = 180, GAUGE_MAX = 300;
+
+  /** 同時に要る本数を、上限 40 本と同じ目盛りの横棒で比べる。上限を超えた分は斜線で描く（数は書かない。列の長さと読まれるため） */
+  function gauge(x, y, need) {
+    const px = (n) => (n * GAUGE_W) / GAUGE_MAX;
+    el(svg, 'rect', { class: 'f-ord', x, y, width: Math.max(3, px(Math.min(need, 40))), height: 16 });
+    if (need > 40) {
+      el(svg, 'rect', { class: 'over', x: x + px(40), y, width: px(need - 40), height: 16 });
     }
+    el(svg, 'rect', { class: 'cap', x, y, width: px(40), height: 16 });
+    text(svg, x, y + 34, 'small', tr('上限 40 本', 'limit 40'));
   }
+
+  function panel(Y, fault) {
+    el(svg, 'rect', { x: 20, y: Y, width: 64, height: 26, rx: 4, fill: fault ? '#fbe3e1' : '#e9e9ee' });
+    text(svg, 52, Y + 18, `tag mid ${fault ? 'bad' : ''}`, fault ? tr('障害時', 'Fault') : tr('平常時', 'Normal'));
+    text(svg, 96, Y + 19, 'hl', fault
+      ? tr('決済 API が 5.05 秒かかる。40 本すべてを /orders が握る', 'The payment API takes 5.05 s; /orders requests fill all 40 threads')
+      : tr('決済 API が 0.05 秒で返る', 'The payment API responds in 0.05 s'));
+
+    // 到着：何をするエンドポイントかを名前の下に添える。2 本の矢印を 1 点に合流させる（エンドポイントごとの列はない）
+    const oEnd = text(svg, 20, Y + 96, 'lbl ord', tr('/orders 60 件/秒', '/orders 60 req/s'));
+    text(svg, 20, Y + 115, 'small', tr('決済 API を呼ぶ', 'calls the payment API'));
+    const pEnd = text(svg, 20, Y + 144, 'lbl prd', tr('/products 10 件/秒', '/products 10 req/s'));
+    text(svg, 20, Y + 163, 'small', tr('DB を読むだけ', 'only reads the DB'));
+    const MX = Math.max(oEnd, pEnd) + 26, MY = Y + 122;
+    el(svg, 'path', { class: 'ln ord', d: `M${oEnd + 8} ${Y + 91} H${MX - 18} L${MX} ${MY}` });
+    el(svg, 'path', { class: 'ln prd', d: `M${pEnd + 8} ${Y + 139} H${MX - 18} L${MX} ${MY}` });
+    if (!fault) {
+      el(svg, 'line', { class: 'ln', x1: MX, y1: MY, x2: POOL_X - 3, y2: MY, 'marker-end': 'url(#arrow)' });
+    } else {
+      // 空きを待つ列：スレッドを持たないので薄い色。/orders と /products が到着順に混ざる
+      const QX = POOL_X - 8 - 100;
+      el(svg, 'line', { class: 'ln', x1: MX, y1: MY, x2: QX - 2, y2: MY });
+      [...'ooopoooooo'].forEach((c, i) => {
+        el(svg, 'rect', { class: c === 'p' ? 'f-prd-wait' : 'f-ord-wait', x: QX + i * 10, y: MY - 8, width: 7, height: 16, rx: 1 });
+      });
+      el(svg, 'line', { class: 'ln', x1: QX + 98, y1: MY, x2: POOL_X - 3, y2: MY, 'marker-end': 'url(#arrow)' });
+      text(svg, POOL_X - 8, Y + 76, 'small end', tr('空きを待つ列（先着順）', 'queue (FIFO)'));
+      text(svg, POOL_X - 8, MY + 30, 'small prd b end', tr('/products も並ぶ', '/products waits too'));
+    }
+
+    // スレッド 40 本（/livez も含む全 API で共有）
+    el(svg, 'rect', { class: 'pool', x: POOL_X, y: Y + 44, width: 270, height: 158 });
+    text(svg, POOL_X + 135, Y + 67, 'lbl mid', tr('スレッド 40 本', '40 threads'));
+    text(svg, POOL_X + 135, Y + 86, 'small mid', tr('/livez も含む全エンドポイントで共有', 'shared by all endpoints, even /livez'));
+    for (let i = 0; i < 40; i++) {
+      el(svg, 'rect', { class: `slot${i < (fault ? 40 : 3) ? ' used' : ''}`, x: POOL_X + 10 + (i % 10) * 26, y: Y + 98 + Math.floor(i / 10) * 26, width: 20, height: 20, rx: 2 });
+    }
+
+    // 同時に要る本数 λW（上限がなければ使う本数。上限で頭打ちになる実際の本数 L とは分けて呼ぶ）
+    const need = fault ? 300 : 3;
+    text(svg, COL_X, Y + 67, 'small', tr('/orders に要る本数（λW）', 'Threads /orders needs (λW)'));
+    text(svg, COL_X, Y + 102, `big ${fault ? 'bad' : 'ord'}`, tr(`${need} 本`, `${need}`));
+    text(svg, COL_X, Y + 126, 'body', fault ? tr('≈ 60 件/秒 × 5.05 秒', '≈ 60 req/s × 5.05 s') : tr('≈ 60 件/秒 × 0.05 秒', '≈ 60 req/s × 0.05 s'));
+    if (fault) gauge(COL_X, Y + 144, need);
+  }
+
+  panel(12, false);
+  panel(240, true);
+  canvas(svg, W, 456);
 </script>
-<script src="diagram.js"></script>
 </body>
 </html>
