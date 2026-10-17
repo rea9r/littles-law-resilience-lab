@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Timeout window</title>
+<link rel="stylesheet" href="explainer.css">
+</head>
+<body>
+<!-- 決済 API のタイムアウトを置ける範囲（窓）。下限は平常時の p99 に余裕を足した値、上限は資源の上限 × 0.7 ÷ ピーク時の到着率。上の段は窓がある形、下の 2 段は下限が上限を超えて窓がない形 -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>
+  const svg = document.getElementById('fig');
+  defs(svg);
+  const LX = 20, AX = 40, S = 0.7;
+  const X = (ms) => AX + ms * S;
+
+  // 式の凡例
+  let lx = text(svg, LX, 28, 'lbl', tr('下限', 'Lower bound'));
+  text(svg, lx + 8, 28, 'body', tr('＝ 決済 API の平常時の p99 ＋ 余裕（これより短いと、平常時にもタイムアウトする）', '= the payment API\'s normal p99 + headroom (shorter times out even in normal times)'));
+  lx = text(svg, LX, 52, 'lbl', tr('上限', 'Upper bound'));
+  text(svg, lx + 8, 52, 'body', tr('＝ 資源の上限 × 0.7 ÷ ピーク時の到着率（これより長いと、障害時に λW が上限を超える）', '= resource limit × 0.7 ÷ peak arrival rate (longer lets λW exceed the limit)'));
+
+  const TOP = 84, LANE = 138, BH = 24;
+  const lanes = [
+    { head: tr('決済 API の p99 が 120ms、スレッド 40 本で考える', 'Payment API p99 120 ms, against 40 threads'), lower: [200, 'p99 120 ＋ ' + tr('余裕', 'headroom')], upper: [467, '40 × 0.7 ÷ 60'], pick: [300, tr('01a・01b の 300ms', '300 ms in 01a, 01b')] },
+    { head: tr('同じ決済 API をトランザクションの中で呼ぶと、コネクション 10 本でも考える', 'Same API called inside the transaction: also against 10 connections'), lower: [200, 'p99 120 ＋ ' + tr('余裕', 'headroom')], upper: [117, '10 × 0.7 ÷ 60'], pick: [300, tr('01a の 300ms', '300 ms in 01a')] },
+    { head: tr('決済 API の p99 が 600ms、スレッド 40 本で考える', 'Payment API p99 600 ms, against 40 threads'), lower: [800, 'p99 600 ＋ ' + tr('余裕', 'headroom')], upper: [467, '40 × 0.7 ÷ 60'], pick: [800, tr('02a の 800ms', '800 ms in 02a')] },
+  ];
+  const END = TOP + lanes.length * LANE;
+
+  // 目盛りの縦線（段をまたいで値をそろえて読めるように）
+  for (let ms = 0; ms <= 1000; ms += 200) el(svg, 'line', { class: 'row-grid', x1: X(ms), y1: TOP + 30, x2: X(ms), y2: END });
+
+  lanes.forEach(({ head, lower, upper, pick }, i) => {
+    const y = TOP + i * LANE;
+    text(svg, LX, y + 14, 'hl', head);
+    const by = y + 46;
+    el(svg, 'rect', { x: X(0), y: by, width: X(1000) - X(0), height: BH, fill: '#f4f4f7' });
+    const [lo, hi] = [lower[0], upper[0]];
+    if (lo < hi) {
+      el(svg, 'rect', { class: 'f-ord-wait', x: X(lo), y: by, width: X(hi) - X(lo), height: BH });
+    } else {
+      el(svg, 'rect', { class: 'over', x: X(hi), y: by, width: X(lo) - X(hi), height: BH });
+    }
+    // 下限と上限：線と、窓（または隙間）の外向きに名前と式
+    const left = Math.min(lo, hi) === lo ? 'lower' : 'upper';
+    for (const [kind, [ms, formula]] of [['lower', lower], ['upper', upper]]) {
+      el(svg, 'line', { x1: X(ms), y1: by - 6, x2: X(ms), y2: by + BH + 6, stroke: '#19191c', 'stroke-width': 1.6 });
+      const name = kind === 'lower' ? tr(`下限 ${ms}`, `lower ${ms}`) : tr(`上限 ${ms}`, `upper ${ms}`);
+      const out = kind === left ? -6 : 6;
+      const cls = out < 0 ? ' end' : '';
+      text(svg, X(ms) + out, by + BH + 24, `lbl${cls}`, name);
+      text(svg, X(ms) + out, by + BH + 44, `small${cls}`, formula);
+    }
+    // 実験で選んだ値
+    const [p, label] = pick;
+    el(svg, 'line', { x1: X(p), y1: by - 8, x2: X(p), y2: by + BH + 8, stroke: '#5342a2', 'stroke-width': 3 });
+    text(svg, X(p) + 8, by - 12, 'small ord b', label);
+    // 窓の中（選んだ値の線を避ける）か、隙間の上に結論
+    if (lo < hi) text(svg, (X(p) + X(hi)) / 2, by + 17, 'lbl ord mid', tr('窓', 'window'));
+    else text(svg, (X(lo) + X(hi)) / 2, by - 12, 'lbl bad mid', tr('窓がない', 'no window'));
+  });
+
+  // 共通の目盛り
+  el(svg, 'line', { class: 'axis', x1: X(0), y1: END, x2: X(1000), y2: END });
+  for (let ms = 0; ms <= 1000; ms += 200) text(svg, X(ms), END + 20, 'small mid', ms === 1000 ? '1000 ms' : String(ms));
+  text(svg, LX, END + 46, 'note', tr('タイムアウト。紫の線は、各シナリオで実際に設定した値', 'Timeout. Purple lines are the values each scenario actually set'));
+  canvas(svg, 800, END + 60);
+</script>
+</body>
+</html>
