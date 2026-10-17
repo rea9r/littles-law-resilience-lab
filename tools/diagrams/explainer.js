@@ -46,9 +46,12 @@ function canvas(svg, w, h) {
 }
 
 /** 角の丸い箱を描き、行を中央にそろえて書く。lines は [クラス, 文字] の並び。箱の位置と大きさを返す */
-function box(parent, x, y, w, lines, { stroke = '#8a8a92', fill = '#ffffff', width = 1.4, pad = 14, gap = 20 } = {}) {
-  const h = pad * 2 + 14 + (lines.length - 1) * gap;
+function box(parent, x, y, w, lines, { stroke = '#8a8a92', fill = '#ffffff', width = 1.4, pad = 14, gap = 20, h } = {}) {
+  // h を渡すと、その高さの中で行を上下の中央にそろえる（同じ段の箱の大きさをそろえるため）
+  const inner = 14 + (lines.length - 1) * gap;
+  h = h ?? pad * 2 + inner;
   el(parent, 'rect', { x, y, width: w, height: h, rx: 6, fill, stroke, 'stroke-width': width });
-  lines.forEach(([cls, s], i) => text(parent, x + w / 2, y + pad + 13 + i * gap, `${cls} mid`, s));
+  const top = y + (h - inner) / 2;
+  lines.forEach(([cls, s], i) => text(parent, x + w / 2, top + 13 + i * gap, `${cls} mid`, s));
   return { x, y, w, h, cx: x + w / 2, cy: y + h / 2, r: x + w, b: y + h };
 }
