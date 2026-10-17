@@ -1,0 +1,12 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30300 # Grafana
+        hostPort: 3000
+      - containerPort: 30090 # Prometheus
+        hostPort: 9090
+      - containerPort: 30474 # Toxiproxy の管理 API（遅延の注入・解除）
+        hostPort: 8474

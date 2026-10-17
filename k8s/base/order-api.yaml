@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-api
+  template:
+    metadata:
+      labels:
+        app: order-api
+    spec:
+      containers:
+        - name: order-api
+          image: order-api:dev
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: order-api-config
+          env:
+            - name: LAB_DB_URL
+              value: jdbc:postgresql://postgres.app.svc.cluster.local:5432/lab
+            - name: LAB_PAYMENT_BASE_URL
+              value: http://toxiproxy.app.svc.cluster.local:8666
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: management
+              containerPort: 8081
+          # ヘルスチェックは業務と同じ 8080 番（同じスレッドプール）で受ける。よくある構成をあえて再現している
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: http
+            periodSeconds: 2
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 500m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api
+  namespace: app
+spec:
+  selector:
+    app: order-api
+  ports:
+    - name: http
+      port: 8080
+---
+# メトリクス収集用。readiness に落ちても Pod の IP を返すので、障害の最中も観測を続けられる
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api-metrics
+  namespace: app
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: order-api
+  ports:
+    - name: management
+      port: 8081

@@ -1,0 +1,46 @@
+# scenarios/run.sh が __TESTID__ などを置き換えて適用する
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6
+  namespace: loadtest
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: grafana/k6:2.3.0
+          args:
+            - run
+            - --quiet
+            - --out=experimental-prometheus-rw
+            - --tag=testid=__TESTID__
+            - /scripts/orders-products.js
+          env:
+            - name: DURATION
+              value: __DURATION__
+            - name: ORDERS_RPS
+              value: "__ORDERS_RPS__"
+            - name: PRODUCTS_RPS
+              value: "__PRODUCTS_RPS__"
+            - name: K6_PROMETHEUS_RW_SERVER_URL
+              value: http://prometheus.observability.svc.cluster.local:9090/api/v1/write
+            - name: K6_PROMETHEUS_RW_PUSH_INTERVAL
+              value: 2s
+            - name: K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM
+              value: "true"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 192Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: k6-script

@@ -1,0 +1,8 @@
+[
+  {
+    "name": "payment-api",
+    "listen": "0.0.0.0:8666",
+    "upstream": "payment-api.app.svc.cluster.local:8080",
+    "enabled": true
+  }
+]

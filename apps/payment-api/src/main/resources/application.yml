@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: payment-api
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: ${LAB_TOMCAT_MAX_THREADS:6}
+      min-spare: ${LAB_TOMCAT_MAX_THREADS:6}
+    mbeanregistry:
+      enabled: true
+
+management:
+  server:
+    port: 8081 # ヘルスチェックとメトリクスは業務とは別のスレッドプールで受ける
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+lab:
+  latency:
+    mean-ms: ${LAB_LATENCY_MEAN_MS:50}
+    p99-ms: ${LAB_LATENCY_P99_MS:120}

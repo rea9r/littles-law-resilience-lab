@@ -1,0 +1,74 @@
+# シナリオで変える値はすべて LAB_* の環境変数で上書きする（既定値は「防御なし」）
+spring:
+  application:
+    name: order-api
+  datasource:
+    url: ${LAB_DB_URL:jdbc:postgresql://localhost:5432/lab}
+    username: ${LAB_DB_USER:lab}
+    password: ${LAB_DB_PASSWORD:lab}
+    hikari:
+      maximum-pool-size: ${LAB_HIKARI_POOL_SIZE:10}
+      # コネクションの取得を待つ上限（ミリ秒）。HikariCP の既定は 30 秒
+      connection-timeout: ${LAB_HIKARI_CONNECTION_TIMEOUT_MS:30000}
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: ${LAB_TOMCAT_MAX_THREADS:40}
+    mbeanregistry:
+      enabled: true # Tomcat のスレッド数をメトリクスに出すため
+
+management:
+  server:
+    port: 8081 # メトリクスは別ポート（別スレッドプール）で出し、スレッドが尽きても観測できるようにする
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+        add-additional-paths: true # /livez と /readyz を業務と同じ 8080 番でも出す（よくある構成）
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
+
+lab:
+  payment:
+    base-url: ${LAB_PAYMENT_BASE_URL:http://localhost:8666}
+    connect-timeout: ${LAB_PAYMENT_CONNECT_TIMEOUT:1s}
+    timeout: ${LAB_PAYMENT_TIMEOUT:30s}
+    call-in-transaction: ${LAB_PAYMENT_CALL_IN_TX:true}
+  resilience:
+    bulkhead-enabled: ${LAB_BULKHEAD_ENABLED:false}
+    circuit-breaker-enabled: ${LAB_CIRCUIT_BREAKER_ENABLED:false}
+    retry-enabled: ${LAB_RETRY_ENABLED:false}
+
+resilience4j:
+  bulkhead:
+    instances:
+      payment:
+        max-concurrent-calls: ${LAB_BULKHEAD_MAX_CONCURRENT_CALLS:12}
+        max-wait-duration: 0ms # 枠が空いていなければ待たずに断る
+  retry:
+    instances:
+      payment:
+        max-attempts: ${LAB_RETRY_MAX_ATTEMPTS:3}
+        wait-duration: ${LAB_RETRY_WAIT:500ms}
+        ignore-exceptions: # 断られた呼び出しはリトライしない
+          - io.github.resilience4j.bulkhead.BulkheadFullException
+          - io.github.resilience4j.circuitbreaker.CallNotPermittedException
+  circuitbreaker:
+    instances:
+      payment:
+        sliding-window-type: TIME_BASED
+        sliding-window-size: 10 # 秒
+        minimum-number-of-calls: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: ${LAB_CIRCUIT_BREAKER_WAIT_IN_OPEN:5s}
+        permitted-number-of-calls-in-half-open-state: 10
+        automatic-transition-from-open-to-half-open-enabled: true

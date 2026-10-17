@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: order-api-config
+    namespace: app
+    behavior: merge
+    literals:
+      - LAB_PAYMENT_TIMEOUT=300ms
+      - LAB_PAYMENT_CALL_IN_TX=false
+      - LAB_HIKARI_CONNECTION_TIMEOUT_MS=250
+      - LAB_BULKHEAD_ENABLED=true
+      - LAB_BULKHEAD_MAX_CONCURRENT_CALLS=12
+      - LAB_RETRY_ENABLED=true
+      - LAB_RETRY_MAX_ATTEMPTS=2
+      - LAB_RETRY_WAIT=100ms
+      - LAB_CIRCUIT_BREAKER_ENABLED=true

@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespaces.yaml
+  - postgres.yaml
+  - payment-api.yaml
+  - toxiproxy.yaml
+  - order-api.yaml
+
+configMapGenerator:
+  # base の値は「防御なし」。各シナリオは k8s/scenarios/* で差分だけを上書きする
+  - name: order-api-config
+    namespace: app
+    literals:
+      - LAB_TOMCAT_MAX_THREADS=40
+      - LAB_HIKARI_POOL_SIZE=10
+      - LAB_HIKARI_CONNECTION_TIMEOUT_MS=30000
+      - LAB_PAYMENT_TIMEOUT=30s
+      - LAB_PAYMENT_CALL_IN_TX=true
+      - LAB_BULKHEAD_ENABLED=false
+      - LAB_BULKHEAD_MAX_CONCURRENT_CALLS=12
+      - LAB_RETRY_ENABLED=false
+      - LAB_RETRY_MAX_ATTEMPTS=3
+      - LAB_RETRY_WAIT=500ms
+      - LAB_CIRCUIT_BREAKER_ENABLED=false
+      - LAB_CIRCUIT_BREAKER_WAIT_IN_OPEN=5s
+  - name: payment-api-config
+    namespace: app
+    literals:
+      - LAB_TOMCAT_MAX_THREADS=6
+      - LAB_LATENCY_MEAN_MS=50
+      - LAB_LATENCY_P99_MS=120
+  - name: postgres-init
+    namespace: app
+    files:
+      - init.sql
+  - name: toxiproxy-config
+    namespace: app
+    files:
+      - toxiproxy.json

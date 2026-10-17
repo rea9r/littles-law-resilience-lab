@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - prometheus.yaml
+  - grafana.yaml
+
+configMapGenerator:
+  - name: prometheus-config
+    namespace: observability
+    files:
+      - prometheus.yml
+  - name: grafana-datasources
+    namespace: observability
+    files:
+      - grafana-datasources.yaml
+  - name: grafana-dashboard-provider
+    namespace: observability
+    files:
+      - grafana-dashboard-provider.yaml
+  - name: grafana-dashboards
+    namespace: observability
+    files:
+      - dashboards/lab.json

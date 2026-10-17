@@ -1,0 +1,12 @@
+.gradle/
+build/
+.kotlin/
+.idea/
+*.iml
+.DS_Store
+
+# 実験の生データ（score.json とグラフ画像だけをコミットする）
+scenarios/*/results/raw/
+
+# キャプチャツールの依存
+tools/capture/node_modules/
