@@ -13,7 +13,7 @@
   const svg = document.getElementById('fig');
   // 矢じりは線の太さによらず同じ大きさにする
   const d = el(svg, 'defs');
-  for (const [id, c, size] of [['h-gray', '#6e6e73', 10], ['h-ctl', '#9a9aa2', 10], ['h-ord', '#5342a2', 12], ['h-prd', '#00697c', 12], ['h-met', '#7a7a82', 9]]) {
+  for (const [id, c, size] of [['h-ctl', '#9a9aa2', 10], ['h-ord', '#5342a2', 12], ['h-prd', '#00697c', 12], ['h-met', '#7a7a82', 9]]) {
     const m = el(d, 'marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: size, markerHeight: size, markerUnits: 'userSpaceOnUse', orient: 'auto' });
     el(m, 'path', { d: 'M0 1L10 5L0 9z', fill: c });
   }
@@ -26,7 +26,7 @@
   }
 
   // 格子：幅 148・148・148・194、間 35。上段のカードは 3 行で高さをそろえる
-  const X0 = 29, G = 35, W = [148, 148, 148, 194];
+  const X0 = 29, W = [160, 160, 160, 160], G = (744 - 640) / 3;
   const cx = [X0];
   for (let i = 1; i < 4; i++) cx.push(cx[i - 1] + W[i - 1] + G);
   const PX = 12, PY = 100, PW = 776;
@@ -37,10 +37,9 @@
   // 見出しは 2 つとも左上。run.sh からの矢印は k6 の右寄り（kx）に入れて、見出しと交わらないようにする
   text(svg, X0, PY + 24, 'small b', tr('kind クラスタ', 'kind cluster'));
 
-  // 観測の帯（面の下の端まで、一段濃く）
-  const r = 10, B = PY + PH;
-  el(svg, 'path', { d: `M${PX} ${BY} H${PX + PW} V${B - r} A${r} ${r} 0 0 1 ${PX + PW - r} ${B} H${PX + r} A${r} ${r} 0 0 1 ${PX} ${B - r} Z`, fill: '#e1e1e8' });
-  text(svg, X0, BY + 26, 'small b', tr('観測', 'Metrics'));
+  // 観測の帯：クラスタの面の内側に入れ子にして、同じクラスタの中にあることを形で見せる
+  el(svg, 'rect', { x: PX + 8, y: BY, width: PW - 16, height: PY + PH - BY - 8, rx: 7, fill: '#e3e3ea' });
+  text(svg, X0, BY + 24, 'small b', tr('メトリクス', 'Metrics'));
 
   // クラスタの外：run.sh（k6 の真上）
   const host = { x: X0, y: 12, w: W[0], h: 44 };
@@ -50,9 +49,9 @@
 
   // 上段：要求の経路
   const k6 = card(cx[0], Y1, W[0], H1, [['name', 'k6'], ['small ord b', tr('/orders 60 件/秒', '/orders 60 req/s')], ['small prd b', tr('/products 10 件/秒', '/products 10 req/s')]]);
-  const order = card(cx[1], Y1, W[1], H1, [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('コネクション 10 本', '10 DB connections')]]);
-  const toxi = card(cx[2], Y1, W[2], H1, [['name', 'Toxiproxy'], ['small bad', tr('障害中は応答を', 'during the fault,')], ['small bad', tr('5 秒遅らせる', 'adds 5 s to replies')]], { stroke: '#c03a33', width: 1.2, fill: '#fbe3e1' });
-  const pay = card(cx[3], Y1, W[3], H1, [['name', 'payment-api'], ['small', tr('モック・スレッド 6 本', 'mock · 6 threads')], ['small', tr('平均 0.05 秒・p99 0.12 秒', 'mean 0.05 s · p99 0.12 s')]]);
+  const order = card(cx[1], Y1, W[1], H1, [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('DB コネクション 10 本', '10 DB connections')]]);
+  const toxi = card(cx[2], Y1, W[2], H1, [['name', 'Toxiproxy'], ['small bad', tr('障害中は', 'during the fault,')], ['small bad', tr('応答を 5 秒遅らせる', 'adds 5 s to replies')]], { stroke: '#c03a33', width: 1.2, fill: '#fbe3e1' });
+  const pay = card(cx[3], Y1, W[3], H1, [['name', 'payment-api'], ['small', tr('決済 API のモック', 'payment API mock')], ['small', tr('スレッド 6 本', '6 threads')]]);
 
   // 要求：k6 の色つきの行から、その色の線を出す。紫（/orders）だけが決済 API まで続く
   const yo = Y1 + 27 + 20 - 5, yp = yo + 20;
@@ -62,20 +61,22 @@
   el(svg, 'line', { class: 'ln ord req main', x1: toxi.r, y1: yo, x2: pay.x - 2, y2: yo, 'marker-end': 'url(#h-ord)' });
 
   // DB（order-api の真下）
-  const db = card(cx[1], DBY, W[1], 44, [['name', 'PostgreSQL']]);
-  el(svg, 'line', { class: 'ln thin', x1: order.cx, y1: order.b, x2: order.cx, y2: db.y - 2, 'marker-end': 'url(#h-gray)' });
+  // /orders も /products も DB を使うので、k6 からの線と同じ色の 2 本で引く
+  const db = card(order.cx - 55, DBY, 110, 44, [['name', 'PostgreSQL']]);
+  el(svg, 'line', { class: 'ln ord req main', x1: order.cx - 12, y1: order.b, x2: order.cx - 12, y2: db.y - 2, 'marker-end': 'url(#h-ord)' });
+  el(svg, 'line', { class: 'ln prd req main', x1: order.cx + 12, y1: order.b, x2: order.cx + 12, y2: db.y - 2, 'marker-end': 'url(#h-prd)' });
 
   // 観測：Prometheus と Grafana（Grafana が Prometheus に問い合わせる）
   const prom = card(cx[2], Y3, W[2], H3, [['name', 'Prometheus'], ['small', 'localhost:9090']]);
   const graf = card(cx[3], Y3, W[3], H3, [['name', 'Grafana'], ['small', 'localhost:3000']]);
-  el(svg, 'line', { class: 'ln thin', x1: graf.x, y1: prom.cy, x2: prom.r + 2, y2: prom.cy, 'marker-end': 'url(#h-gray)' });
+  el(svg, 'line', { class: 'ln thin ctl', x1: graf.x, y1: prom.cy, x2: prom.r + 2, y2: prom.cy, 'marker-end': 'url(#h-ctl)' });
 
   // メトリクス：Prometheus から 1 本出て T 字に分かれ、order-api と payment-api の 8081 番を取りに行く。k6 は自分から送る
-  // 幹は Toxiproxy の中心から外す（中心に通すと、run.sh → Toxiproxy の線と 1 本の軸に見え、Toxiproxy を監視しているように読める）
-  const dl = order.r - 28, dr = pay.x + 28, tx = prom.x + 26;
-  el(svg, 'path', { class: 'ln met', d: `M${tx} ${prom.y} V${CH} H${dl} V${order.b + 2}`, 'marker-end': 'url(#h-met)' });
-  el(svg, 'path', { class: 'ln met', d: `M${tx} ${CH} H${dr} V${pay.b + 2}`, 'marker-end': 'url(#h-met)' });
-  text(svg, tx + 8, CH + 22, 'note', tr('1 秒ごとに :8081 を取りに行く', 'scrapes :8081 every second'));
+  // T 字の分かれ目は帯のすぐ上まで下げ、幹を短くする（Toxiproxy から離して、Toxiproxy を監視しているように読ませない）。左右は対称
+  const TY = BY - 16, dl = order.r - 10, dr = pay.x + 10;
+  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${prom.y} V${TY} H${dl} V${order.b + 2}`, 'marker-end': 'url(#h-met)' });
+  el(svg, 'path', { class: 'ln met', d: `M${prom.cx} ${TY} H${dr} V${pay.b + 2}`, 'marker-end': 'url(#h-met)' });
+  text(svg, prom.cx, TY - 8, 'note mid', tr('1 秒ごとに :8081 を取りに行く', 'scrapes :8081 every second'));
   const kx = k6.r - 36;
   el(svg, 'path', { class: 'ln met', d: `M${kx} ${k6.b} V${prom.cy} H${prom.x - 2}`, 'marker-end': 'url(#h-met)' });
   text(svg, prom.x - 10, prom.cy - 8, 'note end', tr('結果を 2 秒ごとに送る', 'pushes results every 2 s'));
@@ -84,7 +85,7 @@
   el(svg, 'line', { class: 'ln thin ctl', x1: kx, y1: host.b, x2: kx, y2: k6.y - 2, 'marker-end': 'url(#h-ctl)' });
   text(svg, kx + 8, (host.b + PY) / 2 + 5, 'note', tr('負荷を開始', 'starts the load'));
   el(svg, 'path', { class: 'ln thin ctl', d: `M${host.r} ${host.cy} H${toxi.cx} V${toxi.y - 2}`, 'marker-end': 'url(#h-ctl)' });
-  text(svg, host.r + 16, host.cy - 8, 'note', tr(':8474 で遅延を入れる・外す', 'adds / removes the delay via :8474'));
+  text(svg, cx[1], host.cy - 8, 'note', tr(':8474 で遅延を入れる・外す', 'adds / removes the delay via :8474'));
 
   canvas(svg, 800, PY + PH + 12);
 </script>
