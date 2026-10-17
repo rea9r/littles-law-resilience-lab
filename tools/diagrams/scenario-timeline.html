@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Scenario timeline</title>
+<link rel="stylesheet" href="diagram.css">
+<style>
+  .seg-title { font-size: 15px; font-weight: 700; }
+  .seg-sub { font-size: 12.5px; }
+  .event { font-size: 13px; font-weight: 600; fill: #0f172a; }
+  .event-sub { font-size: 12px; fill: #475569; }
+  .tick { font-size: 12px; fill: #64748b; }
+  .window { stroke: #64748b; stroke-width: 1.2; fill: none; }
+  .window-label { font-size: 12.5px; font-weight: 600; fill: #334155; }
+  .window-sub { font-size: 12px; fill: #64748b; }
+  .marker { stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 4 4; }
+</style>
+</head>
+<body>
+<!-- 1 px = 360 秒 ÷ 1040 px。区間の境目は 0・60・120・240・360 秒 -->
+<svg width="1200" height="340" viewBox="0 0 1200 340" xmlns="http://www.w3.org/2000/svg">
+  <!-- 出来事 -->
+  <line class="marker" x1="80" y1="96" x2="80" y2="146"/>
+  <text class="event" x="80" y="62" data-en="Apply the scenario, start the load">設定を適用して負荷を開始</text>
+  <text class="event-sub" x="80" y="82">k6: /orders 60 rps · /products 10 rps</text>
+
+  <line class="marker" x1="427" y1="96" x2="427" y2="146"/>
+  <text class="event" x="427" y="62" text-anchor="middle" data-en="Inject the delay">遅延を注入</text>
+  <text class="event-sub" x="427" y="82" text-anchor="middle" data-en="Toxiproxy: payment-api +5 s">Toxiproxy：payment-api に +5 秒</text>
+
+  <line class="marker" x1="773" y1="96" x2="773" y2="146"/>
+  <text class="event" x="773" y="62" text-anchor="middle" data-en="Remove the delay">遅延を解除</text>
+
+  <line class="marker" x1="1120" y1="96" x2="1120" y2="146"/>
+  <text class="event" x="1120" y="62" text-anchor="end" data-en="Score the run">被害スコアを集計</text>
+  <text class="event-sub" x="1120" y="82" text-anchor="end" data-en="and export the graphs">グラフを PNG に書き出す</text>
+
+  <!-- 区間 -->
+  <rect x="80" y="146" width="173" height="56" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text class="seg-title" x="166" y="172" text-anchor="middle" fill="#475569" data-en="Warm-up">ウォームアップ</text>
+  <text class="seg-sub" x="166" y="191" text-anchor="middle" fill="#64748b" data-en="60 s">60 秒</text>
+
+  <rect x="253" y="146" width="174" height="56" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text class="seg-title" x="340" y="172" text-anchor="middle" fill="#166534" data-en="Normal">平常時</text>
+  <text class="seg-sub" x="340" y="191" text-anchor="middle" fill="#166534" data-en="60 s">60 秒</text>
+
+  <rect x="427" y="146" width="346" height="56" rx="6" fill="#fee2e2" stroke="#dc2626"/>
+  <text class="seg-title" x="600" y="172" text-anchor="middle" fill="#b91c1c" data-en="Fault">障害</text>
+  <text class="seg-sub" x="600" y="191" text-anchor="middle" fill="#b91c1c" data-en="120 s · payment-api answers 5 s late">120 秒・決済 API の応答が 5 秒遅れる</text>
+
+  <rect x="773" y="146" width="347" height="56" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+  <text class="seg-title" x="946" y="172" text-anchor="middle" fill="#1e40af" data-en="Recovery">回復</text>
+  <text class="seg-sub" x="946" y="191" text-anchor="middle" fill="#1e40af" data-en="120 s">120 秒</text>
+
+  <!-- 時間軸 -->
+  <text class="tick" x="80" y="222" text-anchor="middle">0</text>
+  <text class="tick" x="253" y="222" text-anchor="middle">60</text>
+  <text class="tick" x="427" y="222" text-anchor="middle">120</text>
+  <text class="tick" x="773" y="222" text-anchor="middle">240</text>
+  <text class="tick" x="1120" y="222" text-anchor="middle" data-en="360 s">360 秒</text>
+
+  <!-- 被害スコアの集計に使う区間 -->
+  <path class="window" d="M257 246 V256 H423 V246"/>
+  <text class="window-label" x="340" y="278" text-anchor="middle" data-en="L and λ×W">実測の L と λ×W</text>
+  <text class="window-sub" x="340" y="296" text-anchor="middle" data-en="normal-time baseline">平常時の基準</text>
+
+  <path class="window" d="M431 246 V256 H769 V246"/>
+  <text class="window-label" x="600" y="278" text-anchor="middle" data-en="Damage score">被害スコア</text>
+  <text class="window-sub" x="600" y="296" text-anchor="middle" data-en="success rates, threads, restarts">成功率・スレッド・再起動の回数</text>
+
+  <path class="window" d="M777 246 V256 H1116 V246"/>
+  <text class="window-label" x="946" y="278" text-anchor="middle" data-en="Time to recover">回復までの時間</text>
+  <text class="window-sub" x="946" y="296" text-anchor="middle" data-en="both APIs ≥ 99% for 15 s">両方の API が 15 秒続けて 99% 以上</text>
+</svg>
+<script src="diagram.js"></script>
+</body>
+</html>

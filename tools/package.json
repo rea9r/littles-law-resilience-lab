@@ -1,0 +1,9 @@
+{
+  "name": "lab-tools",
+  "private": true,
+  "type": "module",
+  "description": "Grafana のパネルのキャプチャと、記事用の図の書き出し",
+  "dependencies": {
+    "puppeteer-core": "25.12.0"
+  }
+}

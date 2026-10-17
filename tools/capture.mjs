@@ -1,5 +1,5 @@
 // シナリオ 1 回分の時間範囲で Grafana のパネルを PNG に書き出す
-// 使い方: node tools/capture/capture.mjs scenarios/00-no-defense/results
+// 使い方: node tools/capture.mjs scenarios/00-no-defense/results
 import fs from 'node:fs';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
@@ -25,7 +25,7 @@ const PANELS = [
 
 const resultsDir = process.argv[2];
 if (!resultsDir) {
-  console.error('usage: node tools/capture/capture.mjs <scenarios/xx/results>');
+  console.error('usage: node tools/capture.mjs <scenarios/xx/results>');
   process.exit(1);
 }
 const score = JSON.parse(fs.readFileSync(path.join(resultsDir, 'score.json'), 'utf8'));

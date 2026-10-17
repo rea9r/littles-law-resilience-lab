@@ -1,9 +1,0 @@
-{
-  "name": "capture",
-  "private": true,
-  "type": "module",
-  "description": "Grafana のパネルを記事用の PNG として書き出す",
-  "dependencies": {
-    "puppeteer-core": "25.12.0"
-  }
-}

@@ -109,7 +109,7 @@ python3 -I scenarios/score.py \
   --t-fault-start "$T_FAULT_START" --t-fault-end "$T_FAULT_END" --t-end "$T_END" \
   --fault-start-ms "$FAULT_START_MS" --restarts "$RESTARTS" --out "$OUT"
 
-if [ -d tools/capture/node_modules ]; then
+if [ -d tools/node_modules ]; then
   log "グラフを PNG に書き出す"
-  node tools/capture/capture.mjs "$OUT" >/dev/null && log "→ $OUT/panels/"
+  node tools/capture.mjs "$OUT" >/dev/null && log "→ $OUT/panels/"
 fi

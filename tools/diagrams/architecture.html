@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Architecture</title>
+<link rel="stylesheet" href="diagram.css">
+</head>
+<body>
+<svg width="1200" height="620" viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-metrics" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect class="cluster" x="16" y="16" width="1012" height="588" rx="16"/>
+  <text class="cluster-label" x="36" y="46" data-en="kind cluster (on Docker Desktop)">kind クラスタ（Docker Desktop 上）</text>
+
+  <!-- ns: observability -->
+  <rect class="ns" x="500" y="64" width="510" height="160" rx="12"/>
+  <text class="ns-label" x="516" y="88">ns: observability</text>
+  <rect class="node obs" x="529" y="102" width="200" height="96" rx="10"/>
+  <text class="title" x="629" y="144" text-anchor="middle">Prometheus</text>
+  <text class="sub" x="629" y="168" text-anchor="middle" data-en="scrapes every 1 s">1 秒ごとに収集</text>
+  <rect class="node obs" x="790" y="102" width="200" height="96" rx="10"/>
+  <text class="title" x="890" y="144" text-anchor="middle">Grafana</text>
+  <text class="sub" x="890" y="168" text-anchor="middle" data-en="dashboards">ダッシュボード</text>
+  <path class="edge" d="M729 150 H786" marker-end="url(#arrow)"/>
+
+  <!-- クラスタの外 -->
+  <rect class="node user" x="1048" y="102" width="136" height="96" rx="10"/>
+  <text class="title" x="1116" y="144" text-anchor="middle" data-en="Browser">ブラウザ</text>
+  <text class="sub" x="1116" y="168" text-anchor="middle">localhost:3000</text>
+  <path class="edge" d="M1048 150 H994" marker-end="url(#arrow)"/>
+
+  <!-- メトリクスは 1 本のバスにまとめて Prometheus へ -->
+  <path class="metrics" d="M125 350 V262 H894 V350"/>
+  <path class="metrics" d="M364 350 V262"/>
+  <path class="metrics" d="M629 262 V202" marker-end="url(#arrow-metrics)"/>
+  <text class="metrics-label" x="140" y="254" data-en="metrics">メトリクス</text>
+
+  <!-- ns: loadtest -->
+  <rect class="ns" x="32" y="300" width="186" height="280" rx="12"/>
+  <text class="ns-label" x="48" y="324">ns: loadtest</text>
+  <rect class="node load" x="50" y="350" width="150" height="124" rx="10"/>
+  <text class="title" x="125" y="382" text-anchor="middle">k6</text>
+  <text class="sub" x="125" y="406" text-anchor="middle" data-en="constant arrival rate">一定の到着率で負荷</text>
+  <text class="mono" x="125" y="434" text-anchor="middle">/orders 60 rps</text>
+  <text class="mono" x="125" y="454" text-anchor="middle">/products 10 rps</text>
+
+  <!-- ns: app -->
+  <rect class="ns" x="250" y="300" width="760" height="280" rx="12"/>
+  <text class="ns-label" x="266" y="324">ns: app</text>
+
+  <rect class="node target" x="274" y="350" width="180" height="96" rx="10"/>
+  <text class="title" x="364" y="392" text-anchor="middle">order-api</text>
+  <text class="sub" x="364" y="416" text-anchor="middle" data-en="order API (under test)">注文 API（測定対象）</text>
+
+  <rect class="node fault" x="554" y="350" width="150" height="96" rx="10"/>
+  <text class="title" x="629" y="392" text-anchor="middle">Toxiproxy</text>
+  <text class="sub" x="629" y="416" text-anchor="middle" data-en="injects latency">遅延を注入</text>
+
+  <rect class="node downstream" x="804" y="350" width="180" height="96" rx="10"/>
+  <text class="title" x="894" y="392" text-anchor="middle">payment-api</text>
+  <text class="sub" x="894" y="416" text-anchor="middle" data-en="payment API mock">決済 API のモック</text>
+
+  <path class="node db" d="M274 506 a90 14 0 0 1 180 0 v50 a90 14 0 0 1 -180 0 z"/>
+  <path d="M274 506 a90 14 0 0 0 180 0" fill="none" stroke="#16a34a" stroke-width="1.6"/>
+  <text class="title" x="364" y="548" text-anchor="middle">PostgreSQL</text>
+
+  <path class="edge" d="M200 398 H270" marker-end="url(#arrow)"/>
+  <path class="edge" d="M454 398 H550" marker-end="url(#arrow)"/>
+  <text class="edge-label" x="504" y="388" text-anchor="middle" data-en="/orders only">/orders だけ</text>
+  <path class="edge" d="M704 398 H800" marker-end="url(#arrow)"/>
+  <text class="fault-label" x="754" y="388" text-anchor="middle" data-en="+5 s (fault)">障害時は +5 秒</text>
+  <path class="edge" d="M364 446 V488" marker-end="url(#arrow)"/>
+</svg>
+<script src="diagram.js"></script>
+</body>
+</html>

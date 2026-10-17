@@ -9,4 +9,4 @@ build/
 scenarios/*/results/raw/
 
 # キャプチャツールの依存
-tools/capture/node_modules/
+tools/node_modules/

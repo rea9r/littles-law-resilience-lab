@@ -1,0 +1,37 @@
+html, body { margin: 0; background: #ffffff; }
+svg {
+  display: block;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+}
+
+.cluster { fill: none; stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 6 5; }
+.cluster-label { font-size: 15px; font-weight: 600; fill: #475569; }
+.ns { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; }
+.ns-label { font-size: 13px; font-weight: 600; fill: #64748b; }
+
+.node { stroke-width: 1.6; }
+.title { font-size: 17px; font-weight: 700; fill: #0f172a; }
+.sub { font-size: 13px; fill: #475569; }
+.mono { font-size: 12px; fill: #334155; font-family: "SF Mono", Menlo, Consolas, monospace; }
+.caption { font-size: 14px; fill: #334155; }
+
+.edge { stroke: #334155; stroke-width: 1.6; fill: none; }
+.edge-label { font-size: 12.5px; fill: #334155; }
+.metrics { stroke: #7c3aed; stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; }
+.metrics-label { font-size: 12.5px; fill: #6d28d9; }
+.fault-label { font-size: 12.5px; font-weight: 700; fill: #c2410c; }
+
+/* 役割ごとの色 */
+.load { fill: #ffffff; stroke: #64748b; }
+.target { fill: #eff6ff; stroke: #2563eb; }
+.fault { fill: #fff7ed; stroke: #ea580c; }
+.downstream { fill: #ffffff; stroke: #475569; }
+.db { fill: #f0fdf4; stroke: #16a34a; }
+.obs { fill: #f5f3ff; stroke: #7c3aed; }
+.user { fill: #ffffff; stroke: #64748b; }
+.shared { fill: #fef2f2; stroke: #dc2626; }
+.shared-label { font-size: 12.5px; font-weight: 700; fill: #b91c1c; }
+.layer { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.2; }
+.layer-label { font-size: 12.5px; font-weight: 600; fill: #334155; }
+.slot { fill: #ffffff; stroke: #f87171; stroke-width: 1.2; }
+.slot.used { fill: #f87171; }
