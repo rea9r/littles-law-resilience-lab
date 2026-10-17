@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<!-- kind クラスタを薄い灰の面に、部品を同じ高さの白いカードで描く（ほかの図と同じく、線ではなく面で区切る）。4 列の格子：幅 148・148・148・194、間 35。上段は要求の経路、その下に DB、一番下の帯が観測。線は 3 種類：要求（色つきの太線。主役）、操作（薄い灰の細線）、メトリクス（点線）。k6 の色つきの行から同じ色の線を出し、紫（/orders）だけが決済 API まで続く -->
+<!-- kind クラスタを薄い灰の面に、部品を同じ高さの白いカードで描く（ほかの図と同じく、線ではなく面で区切る）。4 列の格子：幅 160 を 4 列、面の縁から 25px 内側。上段は要求の経路、その下に DB、一番下の帯が観測。線は 3 種類：要求（色つきの太線。主役）、操作（薄い灰の細線）、メトリクス（点線）。k6 の色つきの行から同じ色の線を出し、紫（/orders）だけが決済 API まで続く -->
 <svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
 <script src="explainer.js"></script>
 <script>
@@ -25,7 +25,7 @@
     return { x, y, w, h, cx: x + w / 2, cy: y + h / 2, r: x + w, b: y + h };
   }
 
-  // 格子：幅 148・148・148・194、間 35。上段のカードは 3 行で高さをそろえる
+  // 上段のカードは 3 行で高さをそろえる
   // 格子は面の縁から 25px 内側。入れ子の帯（面の縁から 8px）の中でも、カードの周りに 17px 前後の余白が残る
   const X0 = 37, W = [160, 160, 160, 160], G = (726 - 640) / 3;
   const cx = [X0];
@@ -39,7 +39,7 @@
   text(svg, X0, PY + 24, 'small b', tr('kind クラスタ', 'kind cluster'));
 
   // 観測の帯：クラスタの面の内側に入れ子にして、同じクラスタの中にあることを形で見せる
-  el(svg, 'rect', { x: PX + 8, y: BY, width: PW - 16, height: PY + PH - BY - 8, rx: 7, fill: '#e3e3ea' });
+  el(svg, 'rect', { x: PX + 8, y: BY, width: PW - 16, height: PY + PH - BY - 8, rx: 4, fill: '#e3e3ea' });
   text(svg, X0, BY + 24, 'small b', tr('メトリクス', 'Metrics'));
 
   // クラスタの外：run.sh（k6 の真上）
@@ -50,7 +50,7 @@
 
   // 上段：要求の経路
   const k6 = card(cx[0], Y1, W[0], H1, [['name', 'k6'], ['small ord b', tr('/orders 60 件/秒', '/orders 60 req/s')], ['small prd b', tr('/products 10 件/秒', '/products 10 req/s')]]);
-  const order = card(cx[1], Y1, W[1], H1, [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('DB コネクション 10 本', '10 DB connections')]]);
+  const order = card(cx[1], Y1, W[1], H1, [['name', 'order-api'], ['small', tr('スレッド 40 本', '40 threads')], ['small', tr('コネクション 10 本', '10 DB connections')]]);
   const toxi = card(cx[2], Y1, W[2], H1, [['name', 'Toxiproxy'], ['small bad', tr('障害中は', 'during the fault,')], ['small bad', tr('応答を 5 秒遅らせる', 'adds 5 s to replies')]], { stroke: '#c03a33', width: 1.2, fill: '#fbe3e1' });
   const pay = card(cx[3], Y1, W[3], H1, [['name', 'payment-api'], ['small', tr('決済 API のモック', 'payment API mock')], ['small', tr('スレッド 6 本', '6 threads')]]);
 
