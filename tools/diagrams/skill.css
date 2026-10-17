@@ -1,0 +1,91 @@
+/* explain-as-slides（Kotlin テーマ）の図の配色とクラスを写したもの。既定は白地、?theme=dark でダーク */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap");
+:root{--page-bg:#e6e6ea;--slide-bg:#ffffff;--ink:#303036;--navy:#19191c;--accent:#7f52ff;--blue:#7f52ff;--green:#7f52ff;--cyan:#8f73ff;--muted:#6e6e73;--rule:#c7c7cc;--hairline:#e3e3e8;--soft:#d5d5da;--soft-blue:#d5d5da;--soft-yellow:#dcdbf2;--warning:#f8873c;--rose:#e44857;--font-sans:"JetBrains Sans",Inter,"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;--font-serif:"JetBrains Sans",Inter,"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;--fill-1:#7f52ff;--fill-2:#5b3fc4;--fill-3:#bdbdc2;--on-fill:#ffffff;--group:#ebebee;--outline:#86868a;--note:#55555c;--up:#c8102e;--down:#0b63ce;--tone-teal:#b1e6ec;--tone-teal-ink:#00697c;--tone-blue:#c0deff;--tone-blue-ink:#0056a4;--tone-violet:#d8d6fe;--tone-violet-ink:#5342a2;--tone-orchid:#eecfef;--tone-orchid-ink:#7c2f82;--font-mono:"JetBrains Mono","SF Mono",Menlo,Consolas,"Hiragino Kaku Gothic ProN","Noto Sans JP",monospace;}
+:root[data-theme="dark"]{--page-bg:#000000;--slide-bg:#19191c;--ink:#d2d2d6;--navy:#ffffff;--accent:#a58dff;--blue:#a58dff;--green:#a58dff;--cyan:#cfc4ff;--muted:#8e8e93;--rule:#4a4a50;--hairline:#303033;--soft:#39393c;--soft-blue:#39393c;--soft-yellow:#3b3a51;--warning:#f8873c;--rose:#e44857;--font-sans:"JetBrains Sans",Inter,"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;--font-serif:"JetBrains Sans",Inter,"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;--fill-1:#7f52ff;--fill-2:#5b3fc4;--fill-3:#4f4f53;--on-fill:#ffffff;--group:#27272b;--outline:#77777c;--note:#b4b4ba;--up:#ff6b6b;--down:#5aa9ff;--tone-teal:#0f4d53;--tone-teal-ink:#73dee9;--tone-blue:#2a4663;--tone-blue-ink:#98d0ff;--tone-violet:#413f62;--tone-violet-ink:#c6c1ff;--tone-orchid:#543855;--tone-orchid-ink:#ecb4ef;--font-mono:"JetBrains Mono","SF Mono",Menlo,Consolas,"Hiragino Kaku Gothic ProN","Noto Sans JP",monospace;}
+html,body{margin:0;background:var(--slide-bg)}
+svg.fig{display:block;font-family:var(--font-sans);font-size:15px}
+svg.fig .bg{fill:var(--slide-bg)}
+svg.fig .box{fill:var(--soft)}
+svg.fig .box.key{fill:var(--fill-1)}
+svg.fig .frame{fill:var(--group)}
+svg.fig .ln{fill:none;stroke:var(--muted);stroke-width:1.5}
+svg.fig .ln.key{stroke:var(--accent)}
+svg.fig .ln.dash{stroke-dasharray:5 4}
+svg.fig .ln.to{marker-end:url(#fig-arrow)}
+svg.fig .ln.from{marker-start:url(#fig-arrow)}
+svg.fig .ln.key.to{marker-end:url(#fig-arrow-key)}
+svg.fig .ln.key.from{marker-start:url(#fig-arrow-key)}
+svg.fig .life{stroke:var(--rule);stroke-width:1;stroke-dasharray:4 4}
+svg.fig text{fill:var(--ink)}
+svg.fig .t{fill:var(--navy);font-weight:700}
+svg.fig .on{fill:var(--on-fill);font-weight:700}
+svg.fig .k{fill:var(--accent);font-weight:700}
+svg.fig .n{fill:var(--note);font-size:13px}
+svg.fig .m{font-family:var(--font-mono);font-size:14px}
+svg.fig .mid{text-anchor:middle;dominant-baseline:central}
+svg.fig .end{text-anchor:end}
+svg.fig .mask{fill:var(--slide-bg)}
+svg.fig .v{font-size:22px;font-weight:700;fill:var(--navy);font-variant-numeric:tabular-nums}
+svg.fig .v.k{fill:var(--accent)}
+svg.fig .bar{fill:var(--fill-3)}
+svg.fig .bar.key{fill:var(--fill-1)}
+svg.fig .n.sm{font-size:12px}
+svg.fig .act{fill:var(--fill-3)}
+svg.fig .act.key{fill:var(--fill-1)}
+svg.fig .ax{fill:none;stroke:var(--rule);stroke-width:1.5}
+svg.fig .ser{fill:none;stroke-width:2.5;stroke-linejoin:round}
+svg.fig .ser.base{stroke:var(--muted);stroke-width:1.5}
+svg.fig .ser.key{stroke:var(--accent)}
+svg.fig .area{fill:var(--fill-1);fill-opacity:.2}
+svg.fig .area.wait{fill:var(--muted);fill-opacity:.22}
+svg.fig text.up{fill:var(--up)}
+svg.fig text.down{fill:var(--down)}
+svg.fig .box.tone-teal{fill:var(--tone-teal)}
+svg.fig .box.tone-blue{fill:var(--tone-blue)}
+svg.fig .box.tone-violet{fill:var(--tone-violet)}
+svg.fig .box.tone-orchid{fill:var(--tone-orchid)}
+svg.fig .t.tone-teal{fill:var(--tone-teal-ink)}
+svg.fig .t.tone-blue{fill:var(--tone-blue-ink)}
+svg.fig .t.tone-violet{fill:var(--tone-violet-ink)}
+svg.fig .t.tone-orchid{fill:var(--tone-orchid-ink)}
+svg.fig .slot{fill:none;stroke:var(--muted);stroke-width:1.2}
+svg.fig .slot.used{fill:var(--accent);stroke:var(--accent)}
+svg.fig .slot.tone-teal{stroke:var(--tone-teal-ink)}
+svg.fig .slot.tone-blue{stroke:var(--tone-blue-ink)}
+svg.fig .slot.tone-violet{stroke:var(--tone-violet-ink)}
+svg.fig .slot.tone-orchid{stroke:var(--tone-orchid-ink)}
+svg.fig .slot.used.tone-teal{fill:var(--tone-teal-ink)}
+svg.fig .slot.used.tone-blue{fill:var(--tone-blue-ink)}
+svg.fig .slot.used.tone-violet{fill:var(--tone-violet-ink)}
+svg.fig .slot.used.tone-orchid{fill:var(--tone-orchid-ink)}
+svg.fig .scope{fill:none;stroke:var(--outline);stroke-width:1.5;stroke-dasharray:6 5}
+svg.fig .layer{fill:none;stroke:var(--outline);stroke-width:1.5}
+svg.fig .gap{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 4}
+svg.fig .lane{fill:var(--group)}
+svg.fig .lane-bar{fill:var(--muted)}
+svg.fig .lane-bar.tone-teal{fill:var(--tone-teal-ink)}
+svg.fig .lane-bar.tone-blue{fill:var(--tone-blue-ink)}
+svg.fig .lane-bar.tone-violet{fill:var(--tone-violet-ink)}
+svg.fig .lane-bar.tone-orchid{fill:var(--tone-orchid-ink)}
+svg.fig .lane-t{font-size:16px}
+svg.fig .step{fill:var(--slide-bg);stroke:var(--accent);stroke-width:1.6}
+svg.fig .step-n{fill:var(--accent);font-weight:700;font-size:13px;text-anchor:middle;dominant-baseline:central}
+svg.fig .ann-t{fill:var(--accent);font-weight:700;font-size:13px}
+svg.fig .ann{fill:var(--note);font-size:12.5px}
+svg.fig .chip{fill:var(--soft)}
+svg.fig .chip-t{font-family:var(--font-mono);font-size:12px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+svg.fig .stack{fill:var(--group)}
+svg.fig .row{fill:var(--soft)}
+svg.fig .row.add{fill:var(--tone-violet)}
+svg.fig .row-t{font-family:var(--font-mono);font-size:12.5px;fill:var(--ink);dominant-baseline:central}
+svg.fig .row-k{fill:var(--note)}
+svg.fig .zone{fill-opacity:.5}
+svg.fig .zone.tone-teal{fill:var(--tone-teal)}
+svg.fig .zone.tone-blue{fill:var(--tone-blue)}
+svg.fig .zone.tone-violet{fill:var(--tone-violet)}
+svg.fig .zone.tone-orchid{fill:var(--tone-orchid)}
+svg.fig .zone-t{font-weight:700;font-size:13px}
+svg.fig .zone-t.tone-teal{fill:var(--tone-teal-ink)}
+svg.fig .zone-t.tone-blue{fill:var(--tone-blue-ink)}
+svg.fig .zone-t.tone-violet{fill:var(--tone-violet-ink)}
+svg.fig .zone-t.tone-orchid{fill:var(--tone-orchid-ink)}

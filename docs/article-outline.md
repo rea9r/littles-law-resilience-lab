@@ -58,6 +58,7 @@ Zenn に 1 本の記事として出す前提の章立て。図は `tools/diagram
 ### 3.2 L が上限を超えると、共有している資源を通じて広がる
 
 - 図：[order-api の中の資源](images/order-api-resources.ja.png)（スレッドプールと HikariCP が全 API で共有されている。マス目で L と上限の関係を見せる）
+- 図：[障害の広がり方（解説図）](images/failure-spread.light.ja.png)。①〜⑤ の番号を追うと、平常時の 3 本 → 遅延 → 0.7 秒で枯渇 → 関係ない API の停止 → 再起動、が読める
 
 ### 3.3 守り方は 3 つ：W を抑える・L を区切る・λ を絞る
 
