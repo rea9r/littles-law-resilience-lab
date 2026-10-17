@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Scenario timeline (slide style)</title>
+<link rel="stylesheet" href="slide.css">
+</head>
+<body>
+<!-- 1 秒 = 2px。区間の境目は 0・60・120・240・360 秒（x = 40・160・280・520・760）。紫は障害の区間だけ -->
+<svg class="fig" width="800" height="250" viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" data-themes="dark light">
+  <rect class="bg" width="800" height="250"/>
+
+  <!-- 出来事 -->
+  <text class="n" x="40" y="40" data-en="Start the load">負荷を開始</text>
+  <text class="n mid" x="280" y="34" data-en="Inject the delay">遅延を注入</text>
+  <text class="n mid" x="520" y="34" data-en="Remove the delay">遅延を解除</text>
+  <text class="n end" x="760" y="40" data-en="Score the run">スコアを集計</text>
+  <line class="ln dash" x1="40" y1="52" x2="40" y2="108"/>
+  <line class="ln dash" x1="280" y1="52" x2="280" y2="108"/>
+  <line class="ln dash" x1="520" y1="52" x2="520" y2="108"/>
+  <line class="ln dash" x1="760" y1="52" x2="760" y2="108"/>
+
+  <!-- 区間 -->
+  <rect class="box" x="40" y="110" width="118" height="48"/>
+  <rect class="box" x="162" y="110" width="116" height="48"/>
+  <rect class="box key" x="282" y="110" width="236" height="48"/>
+  <rect class="box" x="522" y="110" width="238" height="48"/>
+  <text class="t mid" x="99" y="134" data-en="Warm-up">ウォームアップ</text>
+  <text class="t mid" x="220" y="134" data-en="Normal">平常時</text>
+  <text class="on mid" x="400" y="134" data-en="Fault: +5 s">障害（+5 秒）</text>
+  <text class="t mid" x="641" y="134" data-en="Recovery">回復</text>
+
+  <!-- 時間軸 -->
+  <text class="n sm mid" x="40" y="176">0</text>
+  <text class="n sm mid" x="160" y="176">60</text>
+  <text class="n sm mid" x="280" y="176">120</text>
+  <text class="n sm mid" x="520" y="176">240</text>
+  <text class="n sm mid" x="760" y="176" data-en="360 s">360 秒</text>
+
+  <!-- 被害スコアの集計に使う区間 -->
+  <path class="ln" d="M164 196 V204 H276 V196"/>
+  <path class="ln" d="M284 196 V204 H516 V196"/>
+  <path class="ln" d="M524 196 V204 H756 V196"/>
+  <text class="n mid" x="220" y="226" data-en="L and λ×W">L と λ×W</text>
+  <text class="n mid" x="400" y="226" data-en="Damage score">被害スコア</text>
+  <text class="n mid" x="640" y="226" data-en="Time to recover">回復までの時間</text>
+</svg>
+<script src="diagram.js"></script>
+</body>
+</html>

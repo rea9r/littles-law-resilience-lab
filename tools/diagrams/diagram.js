@@ -1,6 +1,8 @@
-// ?lang=en なら data-en の英語に差し替える（既定は日本語）
-const lang = new URLSearchParams(location.search).get('lang') || 'ja';
+// ?lang=en なら data-en の英語に差し替える（既定は日本語）。?theme=light なら白地のトークンにする（slide.css）
+const params = new URLSearchParams(location.search);
+const lang = params.get('lang') || 'ja';
 document.documentElement.lang = lang;
+if (params.get('theme')) document.documentElement.dataset.theme = params.get('theme');
 if (lang === 'en') {
   for (const el of document.querySelectorAll('[data-en]')) el.textContent = el.dataset.en;
 }

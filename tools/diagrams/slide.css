@@ -1,0 +1,48 @@
+/* explain-as-slides の Kotlin テーマ（references/kotlin-theme.md）の図の決まりに合わせた版。既定はダーク、?theme=light で白地 */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap");
+
+:root {
+  --slide-bg: #19191c;
+  --soft: #27282c;
+  --group: #111114;
+  --muted: #8e8e93;
+  --accent: #a58dff;
+  --note: #b4b4ba;
+  --navy: #ffffff;
+  --ink: #d2d2d6;
+  --fill-1: #7f52ff;
+  --on-fill: #ffffff;
+  --font-sans: "JetBrains Sans", Inter, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, "Hiragino Kaku Gothic ProN", monospace;
+}
+:root[data-theme="light"] {
+  --slide-bg: #ffffff;
+  --soft: #efeff4;
+  --group: #f6f6f9;
+  --muted: #6e6e73;
+  --accent: #7f52ff;
+  --note: #55555c;
+  --navy: #19191c;
+  --ink: #303036;
+}
+
+html, body { margin: 0; background: var(--slide-bg); }
+svg.fig { display: block; font-family: var(--font-sans); font-size: 15px; }
+svg.fig .bg { fill: var(--slide-bg); }
+svg.fig .box { fill: var(--soft); }
+svg.fig .box.key { fill: var(--fill-1); }
+svg.fig .frame { fill: var(--group); }
+svg.fig .ln { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+svg.fig .ln.key { stroke: var(--accent); }
+svg.fig .ln.dash { stroke-dasharray: 5 4; }
+svg.fig .ln.to { marker-end: url(#fig-arrow); }
+svg.fig .ln.key.to { marker-end: url(#fig-arrow-key); }
+svg.fig text { fill: var(--ink); }
+svg.fig .t { fill: var(--navy); font-weight: 700; }
+svg.fig .on { fill: var(--on-fill); font-weight: 700; }
+svg.fig .k { fill: var(--accent); font-weight: 700; }
+svg.fig .n { fill: var(--note); font-size: 13px; }
+svg.fig .n.sm { font-size: 12px; }
+svg.fig .m { font-family: var(--font-mono); font-size: 14px; }
+svg.fig .mid { text-anchor: middle; dominant-baseline: central; }
+svg.fig .end { text-anchor: end; }
