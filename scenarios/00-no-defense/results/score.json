@@ -1,6 +1,6 @@
 {
   "scenario": "00-no-defense",
-  "testid": "00-no-defense-20261017-160241",
+  "testid": "00-no-defense-20261017-230831",
   "config": {
     "order-api": {
       "LAB_BULKHEAD_ENABLED": "false",
@@ -26,84 +26,89 @@
     "seconds": 60,
     "products_success": 1.0,
     "orders_success": 1.0,
-    "threads_busy_avg": 2.933333333333333,
-    "threads_busy_max": 8.0,
-    "lambda_rps": 70.00118646078748,
-    "w_avg_seconds": 0.04530951164915254,
-    "lambda_times_w": 3.1717195733995496,
-    "hikari_active_max": 10.0,
+    "threads_busy_avg": 3.0833333333333335,
+    "threads_busy_max": 5.0,
+    "lambda_rps": 69.98305084745762,
+    "w_avg_seconds": 0.04523250983119399,
+    "lambda_times_w": 3.165509035474576,
+    "hikari_active_max": 5.0,
     "hikari_pending_max": 0.0,
-    "cpu_avg": 0.19133333333333336,
-    "payment_rps": 59.983050847457626,
+    "cpu_avg": 0.199,
+    "payment_rps": 59.966101694915245,
     "payment_threads_max": 5.0,
     "k6_dropped": null
   },
   "fault": {
-    "seconds": 120,
-    "products_success": 0.007545762743812943,
-    "orders_success": 0.0006187814583390825,
-    "threads_busy_avg": 27.019607843137255,
+    "seconds": 121,
+    "products_success": 0.009601459435315889,
+    "orders_success": 0.0027629026465766896,
+    "threads_busy_avg": 28.285714285714285,
     "threads_busy_max": 40.0,
-    "lambda_rps": 1.7823616614861117,
-    "w_avg_seconds": 11.032521170177679,
-    "lambda_times_w": 19.66394276325859,
+    "lambda_rps": 1.9916500695827535,
+    "w_avg_seconds": 9.946255005451883,
+    "lambda_times_w": 19.80945947369605,
     "hikari_active_max": 10.0,
-    "hikari_pending_max": 38.0,
-    "cpu_avg": 0.17674249198052785,
-    "payment_rps": 1.605203886106162,
+    "hikari_pending_max": 37.0,
+    "cpu_avg": 0.16042011675389933,
+    "payment_rps": 1.966633889435176,
     "payment_threads_max": 4.0,
-    "k6_dropped": 276.6834354692553
+    "k6_dropped": null
   },
   "recovery": {
-    "seconds": 121,
-    "products_success": 0.6799755730731645,
-    "orders_success": 0.6976841994803644,
-    "threads_busy_avg": 8.813186813186814,
+    "seconds": 120,
+    "products_success": 0.7486721340549397,
+    "orders_success": 0.7614835064397044,
+    "threads_busy_avg": 5.3076923076923075,
     "threads_busy_max": 40.0,
-    "lambda_rps": 56.17444680204058,
-    "w_avg_seconds": 0.12475187068443937,
-    "lambda_times_w": 7.007867323218084,
+    "lambda_rps": 54.05042016806723,
+    "w_avg_seconds": 0.07431826538992538,
+    "lambda_times_w": 4.016933470487396,
     "hikari_active_max": 10.0,
-    "hikari_pending_max": 39.0,
-    "cpu_avg": 0.3309333615102846,
-    "payment_rps": 48.43641938789965,
+    "hikari_pending_max": 37.0,
+    "cpu_avg": 0.2873606393606394,
+    "payment_rps": 46.65546218487395,
     "payment_threads_max": 6.0,
     "k6_dropped": null
   },
-  "seconds_until_threads_exhausted": 0.48,
+  "seconds_until_threads_exhausted": 1.34,
   "threads_after_fault": [
     [
-      0.48,
+      0.34,
+      27.0
+    ],
+    [
+      1.34,
       40.0
     ],
     [
-      1.48,
+      2.34,
       40.0
     ],
     [
-      2.48,
+      3.34,
       40.0
     ],
     [
-      3.48,
+      4.34,
       40.0
     ],
     [
-      4.48,
-      40.0
-    ],
-    [
-      5.48,
+      5.34,
       40.0
     ]
   ],
-  "seconds_until_recovered": 49,
+  "seconds_until_recovered": 38,
   "order_api_restarts": 4,
   "timeline": {
-    "start": 1792220572,
-    "normal_start": 1792220632,
-    "fault_start": 1792220692,
-    "fault_end": 1792220812,
-    "end": 1792220933
+    "start": 1792246112,
+    "normal_start": 1792246172,
+    "fault_start": 1792246232,
+    "fault_start_ms": 1792246232856.5,
+    "fault_inject_ms": [
+      1792246232855,
+      1792246232858
+    ],
+    "fault_end": 1792246353,
+    "end": 1792246473
   }
 }
