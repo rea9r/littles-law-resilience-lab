@@ -21,7 +21,7 @@ The 300 is a steady-state figure. Without a limit, in-flight `/orders` requests 
 
 ![Threads filling up right after the fault](docs/images/thread-timeline.en.png)
 
-Prometheus scrapes the busy-thread count once a second. The chart puts 27 threads busy at 0.40 s and all 40 at about 0.6 s. In one run, the first sample after the fault, 0.48 s in, already showed all 40 busy; in another, 24 were busy at 0.40 s and all 40 at the next sample, 1.40 s in. One run filled up faster than the chart and the other slower; once-a-second sampling can't pin it down more precisely than that.
+Prometheus scrapes the busy-thread count once a second, so only the first sample after the fault can land inside the fill-up. In three runs, that sample showed 27 threads busy at 0.34 s, 35 at 0.47 s and all 40 at 0.92 s. The chart counts only `/orders`; adding the `/products` requests that hold a thread while they wait for a DB connection gives 26 at 0.34 s and 34 at 0.47 s, with all 40 busy at about 0.55 s. Both samples taken mid-fill came within one thread of that calculation.
 
 ## Requirements
 
@@ -91,7 +91,7 @@ The timeout, bulkhead and circuit breaker make `/orders` return sooner, so it al
 | `01b-tx-boundary` | 01a plus: payment call moved out of the transaction, 250 ms connection-wait limit | Threads settle around 20 (60 req/s × the 0.3 s timeout = 18, plus a little) |
 | `02a-no-window` | 01b with a slower payment API (mean 100 ms, p99 600 ms, 12 threads) and an 800 ms timeout | No timeout fits between the p99 (0.6 s) and what 40 threads can afford at 60 req/s with 30% headroom (40 × 0.7 ÷ 60 ≈ 0.47 s), so threads run out |
 | `02b-bulkhead` | 02a plus a bulkhead: at most 12 concurrent payment calls | Capping L keeps `/products` alive |
-| `03a-retry` | 01b plus a retry: 3 attempts, 500 ms apart | W grows to 1.9 s; in 2 of 4 runs order-api had still not recovered 2 minutes after the delay was removed |
+| `03a-retry` | 01b plus a retry: 3 attempts, 500 ms apart | W grows to 1.9 s. After the delay is removed, retries push the payment calls up to the payment API's capacity (about 120 req/s); in 1 of 11 runs started on a fresh Pod, order-api had still not recovered 2 minutes later |
 | `03b-circuit-breaker` | 03a plus a circuit breaker | Once it opens, cutting the calls to the payment API (λ) makes `/orders` fail fast, so its W drops close to zero |
 | `04-all-defenses` | 01b plus a bulkhead, a circuit breaker and a gentler retry (2 attempts, 100 ms apart) | Only `/orders` fails; everything else keeps working |
 
