@@ -77,7 +77,7 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#6a55d6"
+                  "fixedColor": "#303036"
                 }
               },
               {
@@ -96,7 +96,7 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#8a8a92"
+                  "fixedColor": "#b4b4bc"
                 }
               },
               {
@@ -147,7 +147,9 @@
           "refId": "A",
           "range": true
         }
-      ]
+      ],
+      "interval": "100ms",
+      "maxDataPoints": 6000
     },
     {
       "id": 2,
@@ -176,7 +178,46 @@
           "min": 0,
           "max": 1
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "/orders（決済 API を呼ぶ）"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6a55d6"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "/products（決済 API を呼ばない）"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#00697c"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -307,7 +348,7 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#6a55d6"
+                  "fixedColor": "#303036"
                 }
               },
               {
@@ -326,7 +367,7 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#a898ec"
+                  "fixedColor": "#8a8a92"
                 }
               },
               {
@@ -345,7 +386,7 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#8a8a92"
+                  "fixedColor": "#b4b4bc"
                 }
               },
               {
@@ -406,7 +447,9 @@
           "refId": "B",
           "range": true
         }
-      ]
+      ],
+      "interval": "100ms",
+      "maxDataPoints": 6000
     },
     {
       "id": 5,

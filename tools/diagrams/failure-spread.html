@@ -30,7 +30,7 @@
     el(svg, 'rect', { x: 20, y: Y, width: 64, height: 26, rx: 4, fill: fault ? '#fbe3e1' : '#e9e9ee' });
     text(svg, 52, Y + 18, `tag mid ${fault ? 'bad' : ''}`, fault ? tr('障害時', 'Fault') : tr('平常時', 'Normal'));
     text(svg, 96, Y + 19, 'hl', fault
-      ? tr('決済 API が 5.05 秒かかる。40 本すべてを /orders が握る', 'The payment API takes 5.05 s; /orders requests fill all 40 threads')
+      ? tr('決済 API が 5.05 秒かかる。40 本すべてが埋まる', 'The payment API takes 5.05 s; all 40 threads fill up')
       : tr('決済 API が 0.05 秒で返る', 'The payment API responds in 0.05 s'));
 
     // 到着：何をするエンドポイントかを名前の下に添える。2 本の矢印を 1 点に合流させる（エンドポイントごとの列はない）

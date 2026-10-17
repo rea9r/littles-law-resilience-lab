@@ -21,7 +21,9 @@ spec:
           args:
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.path=/prometheus
-            - --storage.tsdb.retention.time=2d
+            # 記事に使う実行の生の値を残すため長めに持つ。PVC（2Gi）を超えないよう容量でも区切る
+            - --storage.tsdb.retention.time=30d
+            - --storage.tsdb.retention.size=1500MB
             - --web.enable-remote-write-receiver
             - --enable-feature=native-histograms
           ports:

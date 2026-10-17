@@ -13,17 +13,17 @@ When the payment API slows down, APIs that never call it stop too. This lab pred
 
 ## What goes wrong
 
-With no defenses enabled (scenario `00-no-defense`), every endpoint of order-api shares the same 40 Tomcat threads. Normally the payment API responds in 0.05 s, so by Little's Law `/orders` keeps about 3 threads busy (60 req/s × 0.05 s). When Toxiproxy adds 5 s of latency, `/orders` would need about 300 threads at once. Once all 40 are busy, new requests wait in a single FIFO queue inside Tomcat, regardless of endpoint. `/products`, which never calls the payment API, sits in that queue until k6 gives up at its own 5 s timeout (a client setting, unrelated to the injected delay). `/livez` is stuck in the same queue, so the liveness probe fails and Kubernetes restarts the Pod.
+With no defenses enabled (scenario `00-no-defense`), every endpoint of order-api shares the same 40 Tomcat threads. Normally the payment API responds in 0.05 s, so by Little's Law `/orders` keeps about 3 threads busy (60 req/s × 0.05 s). When Toxiproxy adds 5 s of latency, `/orders` would eventually need about 300 threads at the same time (60 req/s × 5.05 s). Once all 40 are busy, new requests wait in a single FIFO queue inside Tomcat, regardless of endpoint. Forty threads that each hold a request for 5.05 s can serve only about 8 req/s against 70 arriving, so the queue only grows. `/products`, which never calls the payment API, sits in that queue until k6 gives up at its own 5 s timeout (a client setting, unrelated to the injected delay). `/livez` is stuck in the same queue, so the liveness probe fails and Kubernetes restarts the Pod.
 
 ![How the failure spreads](docs/images/failure-spread.en.png)
 
-The 10 DB connections run out too, and even sooner. `/orders` calls the payment API inside a DB transaction, so each request also holds a connection for the full 5.05 s, and with only 10 of them the connections are gone before the threads. After that, a `/products` request that gets a thread blocks waiting for a connection, so it holds the thread as well.
+The 10 DB connections run out too, and sooner than the threads: `/orders` calls the payment API inside a DB transaction, so it holds a connection for the full 5.05 s, and the 7 idle connections are gone in about 7 ÷ 60 ≈ 0.12 s. After that, a `/products` request that gets a thread blocks waiting for a connection, so it ties up the thread too.
 
-The 300 above is steady-state demand: without the limit, demand would grow by 60 every second and reach about 300 only after 5 s, and busy threads never get there because the pool is capped at 40. What matters is how fast the 40 fill up. The chart below is a calculation, not a measurement: each row is one thread and each bar one `/orders` request, with evenly spaced arrivals and threads only. The 37 idle threads are used up in about 37 ÷ 60 ≈ 0.6 s.
+The 300 is a steady-state figure. Without a limit, in-flight `/orders` requests would grow by 60 per second and reach about 300 only after 5 s; with the limit, busy threads stop at 40 long before that. What matters is how fast the 40 fill up. The chart below is a calculation, not a measurement: each row is a thread and each bar is one `/orders` request. It assumes evenly spaced arrivals and models only the thread pool, not DB connections. How long each bar lasts doesn't matter once it outlasts the fill-up: with 5 s or 30 s of delay, the 40 threads are gone at the same moment.
 
 ![Threads filling up right after the fault](docs/images/thread-timeline.en.png)
 
-Metrics are sampled about once a second. In one run, the first sample after the fault (0.48 s) already showed all 40 threads busy, a little earlier than the chart: once the connections are gone, `/products` holds threads too, which brings the estimate down to about 0.55 s. In the other run, 24 threads were busy at 0.40 s (the chart says 27), and the next sample, at 1.40 s, showed all 40.
+Prometheus scrapes the busy-thread count once a second. In one run, the first sample after the fault, 0.48 s in, already showed all 40 busy. In another run, 24 were busy at 0.40 s and all 40 at the next sample, 1.40 s in. The two runs land on either side of the estimate; once-a-second sampling can't resolve it more finely than that.
 
 ## Requirements
 

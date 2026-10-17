@@ -19,7 +19,7 @@
   const ORDERS_RATE = 60, PRODUCTS_RATE = 10;
   const round = (t) => Math.round(t * 1e9) / 1e9;
   const holdTime = (start, kind) => {
-    if (kind === 'p') return 0.005;
+    if (kind === 'p') return 0.0005;
     return start + 0.05 <= 0 ? 0.05 : 5.05;
   };
 
@@ -95,12 +95,12 @@
   el(svg, 'line', { class: 'grid', x1: x(fullAt), y1: QB - 100 * QS, x2: XE, y2: QB - 100 * QS });
   text(svg, x(fullAt) - 6, QB + 5, 'small end', '0');
   text(svg, x(fullAt) - 6, QB - 100 * QS + 5, 'small end', tr('100 件', '100'));
-  text(svg, XE + 6, QB - queued.length * QS + 4, 'small prd b', `/products ${queuedProducts}`);
+  text(svg, XE + 6, QB - queued.length * QS + 12, 'small prd b', `/products ${queuedProducts}`);
   text(svg, XE + 6, QB - (queuedOrders * QS) / 2 + 6, 'small ord b', `/orders ${queuedOrders}`);
   text(svg, x(fullAt), 66, 'lbl', tr('空きを待つ列（先着順）', 'Queue (FIFO)'));
   text(svg, x(fullAt), 86, 'small', tr(
-    `${fullAt.toFixed(1)} 秒から 1 秒に 70 件ずつ増え、2.0 秒で ${queued.length} 件`,
-    `grows by 70/s after ${fullAt.toFixed(1)} s (${queued.length} by 2.0 s)`));
+    `${fullAt.toFixed(1)} 秒から、1 秒あたり 70 件ずつ増え、2.0 秒で ${queued.length} 件`,
+    `grows by 70 req/s from ${fullAt.toFixed(1)} s (${queued.length} at 2.0 s)`));
 
   // 時間の軸
   el(svg, 'line', { class: 'axis', x1: X0, y1: FB, x2: XE, y2: FB });
@@ -119,9 +119,9 @@
   const cuts = [
     [-0.3, [tr(`この線と交わる棒は ${crossing(-0.3)} 本（L）`, `This line crosses ${crossing(-0.3)} bars (L)`),
             tr('≈ 60 件/秒（λ）× 0.05 秒（W）', '≈ 60 req/s (λ) × 0.05 s (W)')]],
-    [1.0, [tr(`この線と交わる棒は ${crossing(1.0)} 本（L ＝ 上限）`, `This line crosses ${crossing(1.0)} bars (L = 40, the cap)`),
+    [1.0, [tr(`この線と交わる棒は ${crossing(1.0)} 本（L ＝ 上限）`, `This line crosses ${crossing(1.0)} bars (L = 40, the limit)`),
            tr(`上限がなければ ${uncappedAt1} 本`, `Without the limit: ${uncappedAt1}`),
-           tr(`（障害の前からの ${heldAtFault} 本 + 60 件/秒 × 1 秒）`, `(${heldAtFault} in flight + 60 req/s × 1 s)`)]],
+           tr(`（障害の前からの ${heldAtFault} 本 + 60 件/秒 × 1 秒）`, `(${heldAtFault} already in flight + 60 req/s × 1 s)`)]],
   ];
   for (const [t, lines] of cuts) {
     // 軸の数字の上は通らない
