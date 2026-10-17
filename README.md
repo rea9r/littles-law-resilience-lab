@@ -5,7 +5,7 @@ When a downstream payment API slows down, endpoints that never call it go down t
 ![Architecture](docs/images/architecture.en.png)
 
 - **order-api**: Spring Boot (Kotlin), the service under test. `/orders` calls the payment API (inside a DB transaction until scenario 01b moves it out) and stores the order; `/products` only reads the database. Metrics are served on port 8081 by their own threads, so they stay reachable when the 40 request threads run out.
-- **payment-api**: a payment API mock that answers after a log-normal delay. Its six threads cap it at about 120 req/s (6 ÷ 0.05 s).
+- **payment-api**: a payment API mock that answers after a log-normal delay (mean 0.05 s, p99 0.12 s). Its six threads cap it at about 120 req/s (6 ÷ 0.05 s).
 - **Toxiproxy**: sits between the two; `scenarios/run.sh` adds and removes the delay through its admin API.
 - **k6**: sends requests at a constant arrival rate (an open model) and pushes its results to Prometheus.
 
