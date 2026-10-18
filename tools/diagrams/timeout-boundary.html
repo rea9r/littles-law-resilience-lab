@@ -76,9 +76,9 @@
   text(svg, X(RMAX) - 20, Y(6), 'hl end', tr('バルクヘッドなどが要る', 'needs a bulkhead or more'));
   svg.lastChild.style.fill = NG_TEXT;
 
-  // 決済 API が、同じ p99.9 のままタイムアウトで足りなくなる到着率
+  // 決済 API の応答時間のまま到着率を変えたときに、2 本の境目と交わる到着率
   const rConn = CONNS / NORMAL_P, rThr = THREADS / NORMAL_P;
-  el(svg, 'line', { x1: X(RATE), y1: Y(NORMAL_P), x2: X(rThr), y2: Y(NORMAL_P), stroke: '#378ADD', 'stroke-width': 1.6, 'stroke-dasharray': '2 3' });
+  el(svg, 'line', { x1: X(rConn), y1: Y(NORMAL_P), x2: X(rThr), y2: Y(NORMAL_P), stroke: '#378ADD', 'stroke-width': 1.6, 'stroke-dasharray': '2 3' });
   for (const r of [rConn, rThr]) el(svg, 'circle', { cx: X(r), cy: Y(NORMAL_P), r: 3.5, fill: LINE });
   text(svg, X(rConn) - 4, Y(NORMAL_P) + 26, 'small end', tr('約 42 件/秒', '~42 req/s'));
   text(svg, X(rThr) + 8, Y(NORMAL_P) - 10, 'small', tr('約 170 件/秒', '~170 req/s'));
