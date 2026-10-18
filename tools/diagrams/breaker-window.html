@@ -25,7 +25,7 @@
   }
   for (let t = 0; t <= TMAX; t += 2) text(svg, X(t), PY0 + 22, 'small mid', String(t));
   el(svg, 'line', { class: 'axis', x1: PX0, y1: PY0, x2: PX1, y2: PY0 });
-  text(svg, PX1, PY0 + 46, 'small end', tr('障害からの時間（秒）', 'seconds since the fault'));
+  text(svg, (PX0 + PX1) / 2, PY0 + 46, 'small mid', tr('障害からの時間（秒）', 'time since the fault (s)'));
   text(svg, 20, 40, 'small', tr('直近 10 秒の集計に残っている呼び出し（件）', 'calls in the last 10 s of the count'));
 
   // 最初の予測：失敗が 20 件たまれば開く（約 0.6 秒）

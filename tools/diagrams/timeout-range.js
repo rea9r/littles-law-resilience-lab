@@ -1,5 +1,5 @@
 // タイムアウトの下限と上限の図（3 枚で共通）。HTML の側で TIMEOUT_CASE を決めてから読み込む
-// 帯は 2 本。上の帯は短すぎて平常時のタイムアウトが 0.1% を超える長さ（0〜下限 ＝ p99.9）、下の帯は長すぎて障害時にプールが尽きる長さ（上限〜）。帯のあいだに隙間があれば、そこから選べる
+// 帯は 2 本。上の帯は下限（下流の平常時の p99.9）より短いタイムアウト、下の帯は上限（プールの大きさ × 0.7 ÷ ピーク時の到着率）より長いタイムアウト。帯のあいだに隙間があれば、そこから選べる
 const svg = document.getElementById('fig');
 defs(svg);
 const LX = 20, AX = 40, S = 0.5, MAX = 1400;
@@ -8,28 +8,28 @@ const X = (ms) => AX + ms * S;
 const CASES = {
   threads: {
     head: tr('決済 API（平均 50ms・p99 120ms）、スレッド 40 本、到着 60 件/秒', 'Payment API (mean 50 ms, p99 120 ms), 40 threads, 60 req/s'),
-    lower: 165, upper: 467, pick: 300, formulas: true,
+    lower: 165, upper: 467, pick: 300,
   },
   connections: {
     head: tr('決済 API をトランザクションの中で呼ぶ：コネクション 10 本で計算し直す', 'Payment call inside the transaction: recomputed with 10 connections'),
-    lower: 165, upper: 117, pick: 300, formulas: false,
+    lower: 165, upper: 117, pick: 300,
   },
   slow: {
     head: tr('決済 API（平均 100ms・p99 600ms）、スレッド 40 本、到着 60 件/秒', 'Payment API (mean 100 ms, p99 600 ms), 40 threads, 60 req/s'),
-    lower: 1263, upper: 467, pick: 800, formulas: false,
+    lower: 1263, upper: 467, pick: 800,
   },
 };
 const c = CASES[TIMEOUT_CASE];
 
-// 凡例：帯の色と、その長さだと何が起きるか（式は最初の 1 枚だけ）
+// 凡例：帯がどのタイムアウトの値か
 let y = 24;
-for (const [cls, what, formula] of [
-  ['z-short', tr('短すぎる：平常時のタイムアウトが 0.1% を超える', 'Too short: over 0.1% time out in normal times'), tr('下限 ＝ 下流の平常時の p99.9', 'lower bound = downstream normal p99.9')],
-  ['z-long', tr('長すぎる：障害時にプールが尽きる', 'Too long: the pool runs out during a failure'), tr('上限 ＝ プールの大きさ × 使ってよい割合（0.7）÷ 1 台あたりのピーク時の到着率', 'upper bound = pool size × usable share (0.7) ÷ peak arrival rate per instance')],
+for (const [cls, what] of [
+  ['z-short', tr('下限（下流の平常時の p99.9）より短いタイムアウト', 'Timeouts below the lower bound (downstream normal p99.9)')],
+  ['z-long', tr('上限（プールの大きさ × 0.7 ÷ ピーク時の到着率）より長いタイムアウト', 'Timeouts above the upper bound (pool size × 0.7 ÷ peak arrival rate)')],
 ]) {
   el(svg, 'rect', { class: cls, x: LX, y: y - 12, width: 28, height: 14, rx: 2 });
   text(svg, LX + 38, y, 'lbl', what);
-  if (c.formulas) { text(svg, LX + 38, y + 20, 'small', formula); y += 46; } else { y += 26; }
+  y += 26;
 }
 
 const TOP = y + 20, SH = 18, GAP = 6;
@@ -59,6 +59,6 @@ const right = text(svg, X(c.pick) + 8, ys - 10, 'small ord b', label);
 if (right > 792) { svg.removeChild(svg.lastChild); text(svg, X(c.pick) - 8, ys - 10, 'small ord b end', label); }
 
 el(svg, 'line', { class: 'axis', x1: X(0), y1: END, x2: X(MAX), y2: END });
-for (let ms = 0; ms <= MAX; ms += 200) text(svg, X(ms), END + 20, 'small mid', ms === MAX ? '1400 ms' : String(ms));
-text(svg, LX, END + 46, 'note', tr('横軸はタイムアウトの値', 'The axis is the timeout value'));
+for (let ms = 0; ms <= MAX; ms += 200) text(svg, X(ms), END + 20, 'small mid', String(ms));
+text(svg, X(MAX / 2), END + 46, 'small mid', tr('タイムアウト（ms）', 'timeout (ms)'));
 canvas(svg, 800, END + 60);
