@@ -1,6 +1,7 @@
 // シナリオ 1 回分の時間範囲で Grafana のパネルを PNG に書き出す
 // 使い方: node tools/capture.mjs scenarios/00-no-defense/results [--panels threads,hikari] [--around-fault 15,15] [--width 700]
 //   --around-fault 前,後: 障害の始まりの前後だけを撮り、<名前>-fault.png に書き出す（立ち上がりを見せる）
+//   --around-recovery 前,後: 遅延を外した前後だけを撮り、<名前>-recovery.png に書き出す
 //   --width: 撮る幅（既定 960）。Zenn の本文の幅で等倍にするなら 700
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,11 +34,14 @@ if (!resultsDir) {
 const opt = (name) => { const i = rest.indexOf(name); return i >= 0 ? rest[i + 1] : undefined; };
 const only = opt('--panels')?.split(',');
 const around = opt('--around-fault')?.split(',').map(Number);
+const recovery = opt('--around-recovery')?.split(',').map(Number);
 const width = Number(opt('--width') || 960);
 const score = JSON.parse(fs.readFileSync(path.join(resultsDir, 'score.json'), 'utf8'));
-const { fault_start: faultStart } = score.timeline;
-const [from, to] = around ? [faultStart - around[0], faultStart + around[1]] : [score.timeline.normal_start, score.timeline.end];
-const suffix = around ? '-fault' : '';
+const { fault_start: faultStart, fault_end: faultEnd } = score.timeline;
+const [from, to] = around ? [faultStart - around[0], faultStart + around[1]]
+  : recovery ? [faultEnd - recovery[0], faultEnd + recovery[1]]
+  : [score.timeline.normal_start, score.timeline.end];
+const suffix = around ? '-fault' : recovery ? '-recovery' : '';
 const outDir = path.join(resultsDir, 'panels');
 fs.mkdirSync(outDir, { recursive: true });
 

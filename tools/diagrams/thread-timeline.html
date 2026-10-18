@@ -110,9 +110,9 @@
   }
   text(svg, XE, FB + 42, 'small end', tr('障害からの時間（秒）', 'time since the fault (s)'));
 
-  // 満杯になるまで
+  // 尽きるまで
   el(svg, 'path', { d: `M${x(0)} ${FB + 30} v6 H${x(fullAt)} v-6`, fill: 'none', stroke: '#c03a33', 'stroke-width': 1.4 });
-  text(svg, x(0), FB + 56, 'lbl bad', tr(`約 ${fullAt.toFixed(1)} 秒で 40 本が満杯`, `All 40 busy in about ${fullAt.toFixed(1)} s`));
+  text(svg, x(0), FB + 56, 'lbl bad', tr(`約 ${fullAt.toFixed(1)} 秒で 40 本が尽きる`, `All 40 busy in about ${fullAt.toFixed(1)} s`));
   text(svg, x(0), FB + 75, 'small bad', tr(`空いていた ${THREADS - heldAtFault} 本 ÷ 60 件/秒`, `${THREADS - heldAtFault} idle threads ÷ 60 req/s`));
 
   // 縦の切り口

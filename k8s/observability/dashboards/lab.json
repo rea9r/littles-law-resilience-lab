@@ -658,7 +658,56 @@
           },
           "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "使用中"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#dcdce2"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2.5
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "上限"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#82828a"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1.5
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    6
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -675,9 +724,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(tomcat_threads_busy_threads{job=\"payment-api\"})",
-          "legendFormat": "使用中",
-          "refId": "A",
+          "expr": "max(tomcat_threads_config_max_threads{job=\"payment-api\"})",
+          "legendFormat": "上限",
+          "refId": "B",
           "range": true
         },
         {
@@ -685,9 +734,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(tomcat_threads_config_max_threads{job=\"payment-api\"})",
-          "legendFormat": "上限",
-          "refId": "B",
+          "expr": "max(tomcat_threads_busy_threads{job=\"payment-api\"})",
+          "legendFormat": "使用中",
+          "refId": "A",
           "range": true
         }
       ]
