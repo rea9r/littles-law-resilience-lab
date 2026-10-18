@@ -119,8 +119,8 @@
   const cuts = [
     [-0.3, [tr(`この線と交わる棒は ${crossing(-0.3)} 本（L）`, `This line crosses ${crossing(-0.3)} bars (L)`),
             tr('≈ 60 件/秒（λ）× 0.05 秒（W）', '≈ 60 req/s (λ) × 0.05 s (W)')]],
-    [1.0, [tr(`この線と交わる棒は ${crossing(1.0)} 本（L ＝ 上限）`, `This line crosses ${crossing(1.0)} bars (L = 40, the limit)`),
-           tr(`上限がなければ ${uncappedAt1} 本`, `Without the limit: ${uncappedAt1}`),
+    [1.0, [tr(`この線と交わる棒は ${crossing(1.0)} 本（L ＝ プールの大きさ）`, `This line crosses ${crossing(1.0)} bars (L = 40, the pool size)`),
+           tr(`プールが無限に大きければ ${uncappedAt1} 本`, `With an unlimited pool: ${uncappedAt1}`),
            tr(`（障害の前からの ${heldAtFault} 本 + 60 件/秒 × 1 秒）`, `(${heldAtFault} already in flight + 60 req/s × 1 s)`)]],
   ];
   for (const [t, lines] of cuts) {
