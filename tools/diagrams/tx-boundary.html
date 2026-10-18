@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Transaction boundary</title>
+<link rel="stylesheet" href="explainer.css">
+<style>
+  /* 行ごとの色：スレッド・コネクション・決済 API の呼び出し。濃い色が握っている、薄い色が空きを待っている */
+  .r0 { fill: #55555f; } .r0w { fill: #c9c9d1; } .t0 { fill: #3c3c44; }
+  .r1 { fill: #3b7dd8; } .r1w { fill: #b8cdf0; } .t1 { fill: #2b62b3; }
+  .r2 { fill: #6a55d6; } .r2w { fill: #c3b9f2; } .t2 { fill: #5342a2; }
+</style>
+</head>
+<body>
+<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間。上は決済 API をトランザクションの中で呼ぶ形、下は外で呼ぶ形。棒の長さは模式で、比例していない -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>
+  const svg = document.getElementById('fig');
+  defs(svg);
+  const LX = 20, BX = 236, BE = 760, BH = 14, GAP = 36;
+  const X = (f) => BX + (BE - BX) * f;
+  const ROWS = [tr('スレッド', 'Thread'), tr('コネクション', 'DB connection'), tr('決済 API の呼び出し', 'Payment call')];
+
+  /** 行の名前と棒。segs は行ごとの [始まり, 終わり, 待っているか] の並び（0〜1 の割合） */
+  function lane(y, segs) {
+    segs.forEach((row, i) => {
+      text(svg, LX, y + i * GAP + 12, `body b t${i}`, ROWS[i]);
+      for (const [a, b, waiting] of row) el(svg, 'rect', { class: waiting ? `r${i}w` : `r${i}`, x: X(a), y: y + i * GAP, width: Math.max(4, X(b) - X(a)), height: BH, rx: 2 });
+    });
+  }
+
+  // 中で呼ぶとき：決済 API を待つあいだも、コネクションを握っている
+  text(svg, LX, 28, 'hl ord', tr('決済 API をトランザクションの中で呼ぶとき', 'Payment call inside the DB transaction'));
+  const Y1 = 46;
+  lane(Y1, [[[0, 1]], [[0.02, 0.12, true], [0.12, 0.97]], [[0.22, 0.9]]]);
+  text(svg, X(0.07), Y1 + 30, 'small mid', tr('取得待ち', 'waiting'));
+  el(svg, 'path', { d: `M${X(0.22)} ${Y1 + 94} v6 H${X(0.9)} v-6`, fill: 'none', stroke: '#c03a33', 'stroke-width': 1.4 });
+  text(svg, (X(0.22) + X(0.9)) / 2, Y1 + 118, 'small bad mid', tr('障害で 0.05 秒 → 5.05 秒', '0.05 s → 5.05 s during the fault'));
+  text(svg, LX, Y1 + 150, 'body', tr('決済 API を待つあいだも、コネクションを握ったまま', 'The connection stays held while waiting for the payment API'));
+
+  // 外で呼ぶとき：先に決済 API を呼び、コネクションを握るのは書き込みの一瞬だけ
+  const Y2 = Y1 + 204;
+  text(svg, LX, Y2, 'hl ord', tr('決済 API をトランザクションの外で呼ぶとき', 'Payment call outside the transaction'));
+  const L2 = Y2 + 18;
+  lane(L2, [[[0, 0.84]], [[0.74, 0.76, true], [0.76, 0.82]], [[0.04, 0.72]]]);
+  text(svg, X(0.74) - 10, L2 + GAP + 12, 'small end', tr('書き込みの一瞬だけ', 'only for the write'));
+  text(svg, LX, L2 + 132, 'body', tr('決済 API を待つあいだは、コネクションを握らない', 'No connection is held while waiting for the payment API'));
+
+  // 凡例
+  const LY = L2 + 176;
+  let lx = LX;
+  for (const [cls, s] of [['r1', tr('濃い色：握っている', 'dark: held')], ['r1w', tr('薄い色：空きを待っている', 'light: waiting')]]) {
+    el(svg, 'rect', { class: cls, x: lx, y: LY - 11, width: 13, height: 13 });
+    lx = text(svg, lx + 20, LY, 'body', s) + 28;
+  }
+  canvas(svg, 800, LY + 18);
+</script>
+</body>
+</html>
