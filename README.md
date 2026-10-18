@@ -99,7 +99,7 @@ Results of every scenario are compared in [scenarios/SUMMARY.md](scenarios/SUMMA
 
 ## Documentation (Japanese)
 
-These notes, written in Japanese, are the basis of a companion article on Zenn (a Japanese tech blog platform). The article itself is drafted in a separate repository and will be linked here once it is published. Its figures are the PNGs in `docs/images/` and `scenarios/<scenario>/results/panels/`.
+These notes, written in Japanese, are the basis of a companion article on Zenn (a Japanese tech blog platform): [リトルの法則で考える障害時のキャパシティプランニング](https://zenn.dev/rea9r/articles/littles-law-capacity-planning). Its figures are the PNGs in `docs/images/` and `scenarios/<scenario>/results/panels/`, referenced at the `v1.0.0` tag.
 
 - [scenarios/README.md](scenarios/README.md) and `scenarios/<scenario>/prediction.md`: assumptions, predictions and pass criteria written before each run
 - [docs/iteration-log.md](docs/iteration-log.md): every place where a prediction missed and how the lab was fixed
@@ -115,7 +115,7 @@ k8s/observability/    Prometheus and Grafana, dashboard included
 loadtest/             k6 script
 scenarios/            run script, predictions and results
 tools/                panel capture, diagram sources (tools/diagrams) and their renderer
-docs/                 iteration log, article outline and diagrams
+docs/                 iteration log and exported diagrams
 ```
 
 Diagrams are drawn in HTML/SVG under `tools/diagrams/` and exported in Japanese and English with `node tools/render-diagrams.mjs`.
