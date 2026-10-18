@@ -42,7 +42,7 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "order-api のスレッド（使用中と上限）",
+      "title": "order-api のスレッド（使用中とプールの大きさ）",
       "description": "",
       "datasource": {
         "type": "prometheus",
@@ -89,7 +89,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "上限（maxThreads）"
+              "options": "プールの大きさ（maxThreads、設定値）"
             },
             "properties": [
               {
@@ -133,7 +133,7 @@
             "uid": "prometheus"
           },
           "expr": "max(tomcat_threads_config_max_threads{job=\"order-api\"})",
-          "legendFormat": "上限（maxThreads）",
+          "legendFormat": "プールの大きさ（maxThreads、設定値）",
           "refId": "B",
           "range": true
         },
@@ -389,7 +389,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "上限"
+              "options": "プールの大きさ（maximum-pool-size、設定値）"
             },
             "properties": [
               {
@@ -433,7 +433,7 @@
             "uid": "prometheus"
           },
           "expr": "max(hikaricp_connections_max{job=\"order-api\"})",
-          "legendFormat": "上限",
+          "legendFormat": "プールの大きさ（maximum-pool-size、設定値）",
           "refId": "C",
           "range": true
         },
@@ -514,7 +514,7 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Resilience4j（バルクヘッドの空き枠・サーキットブレーカー）",
+      "title": "Resilience4j（バルクヘッドの空き・サーキットブレーカー）",
       "description": "",
       "datasource": {
         "type": "prometheus",
@@ -555,7 +555,7 @@
             "uid": "prometheus"
           },
           "expr": "max(resilience4j_bulkhead_available_concurrent_calls{name=\"payment\"})",
-          "legendFormat": "バルクヘッドの空き枠",
+          "legendFormat": "バルクヘッドの空き（同時に呼べる残りの数）",
           "refId": "A",
           "range": true
         },
@@ -681,7 +681,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "上限"
+              "options": "スレッドの数（設定値）"
             },
             "properties": [
               {
@@ -725,7 +725,7 @@
             "uid": "prometheus"
           },
           "expr": "max(tomcat_threads_config_max_threads{job=\"payment-api\"})",
-          "legendFormat": "上限",
+          "legendFormat": "スレッドの数（設定値）",
           "refId": "B",
           "range": true
         },
@@ -954,8 +954,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (exception) (rate(http_client_requests_seconds_count{job=\"order-api\",outcome!=\"SUCCESS\"}[10s]))",
-          "legendFormat": "失敗：{{exception}}",
+          "expr": "sum(rate(http_client_requests_seconds_count{job=\"order-api\",outcome!=\"SUCCESS\"}[10s]))",
+          "legendFormat": "失敗（タイムアウト）",
           "refId": "B",
           "range": true
         }
