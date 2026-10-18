@@ -78,11 +78,11 @@ Each scenario builds on an earlier one (see "What changes") and switches on one 
 - the bulkhead caps how many payment calls run at once (L);
 - the circuit breaker stops calls from going out (λ).
 
-The timeout, bulkhead and circuit breaker make `/orders` return sooner, so it also holds its thread for less time. Retries do the opposite and raise both W and λ. The badges in the figure (01a, 02b, …) are the scenarios in the table below.
+The timeout, bulkhead and circuit breaker make `/orders` return sooner, so it also holds its thread for less time. Retries do the opposite and raise both W and λ.
 
 ![Where each defense acts](docs/images/defenses.en.png)
 
-*Schematic of one `/orders` request, not to scale. The upper diagram is the shape in 00 and 01a, the lower one from 01b on; each badge sits on the diagram its scenario uses.*
+*Schematic of one `/orders` request, not to scale. The upper diagram calls the payment API inside the DB transaction (00, 01a), the lower one outside it (01b on). Each dot marks where a defense acts.*
 
 | Scenario | What changes | What it shows |
 |---|---|---|

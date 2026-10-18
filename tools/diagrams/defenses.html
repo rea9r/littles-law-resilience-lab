@@ -12,7 +12,7 @@
 </style>
 </head>
 <body>
-<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は 00・01a の形、下の段は 01b 以降の形で、防御はそれを入れるシナリオの段に、シナリオの名前（README の表と同じ）で打つ。W はスレッドやコネクションを握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
+<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は決済 API をトランザクションの中で呼ぶ形、下の段は外で呼ぶ形で、防御はそれが効く段の、効く場所に点を打つ。W はスレッドやコネクションを握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
 <svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
 <script src="explainer.js"></script>
 <script>
@@ -31,53 +31,51 @@
     });
   }
 
-  /** シナリオの名前の札 */
-  function pill(x, y, s) {
-    el(svg, 'rect', { x: x - 20, y: y - 11, width: 40, height: 22, rx: 11, fill: '#19191c' });
-    text(svg, x, y + 5, 'lbl mid', s);
-    svg.lastChild.setAttribute('fill', '#ffffff');
+  /** 効く場所の点 */
+  function dot(x, y) {
+    el(svg, 'circle', { cx: x, cy: y, r: 5, fill: '#19191c' });
   }
 
-  /** 効く場所：縦の切れ目と札。記号（W・L・λ）と名前を札の左か右に書く */
-  function mark(x, top, y, id, letter, name, side) {
-    el(svg, 'line', { class: 'cut', x1: x, y1: top, x2: x, y2: y - 11 });
-    pill(x, y, id);
+  /** 効く場所：縦の切れ目と点。記号（W・L・λ）と名前を点の左か右に書く */
+  function mark(x, top, y, letter, name, side) {
+    el(svg, 'line', { class: 'cut', x1: x, y1: top, x2: x, y2: y - 5 });
+    dot(x, y);
     if (side === 'left') {
-      const end = x - 28;
+      const end = x - 14;
       text(svg, end, y + 5, 'body end', name);
       if (letter) text(svg, end - svg.lastChild.getComputedTextLength() - 6, y + 5, 'lbl end', letter);
     } else {
-      let cx = x + 28;
+      let cx = x + 14;
       if (letter) cx = text(svg, cx, y + 5, 'lbl', letter) + 6;
       text(svg, cx, y + 5, 'body', name);
     }
   }
 
-  // 1. 00・01a：決済 API をトランザクションの中で呼ぶ。コネクションを決済の待ちのあいだも握る
-  text(svg, LX, 28, 'hl ord', tr('00・01a：決済 API をトランザクションの中で呼ぶ', '00, 01a: payment call inside the DB transaction'));
+  // 1. 決済 API をトランザクションの中で呼ぶとき。コネクションを決済の待ちのあいだも握る
+  text(svg, LX, 28, 'hl ord', tr('決済 API をトランザクションの中で呼ぶとき', 'Payment call inside the DB transaction'));
   const Y1 = 46;
   lane(Y1, [[[0, 1, 'f-ord']], [[0.02, 0.12, 'f-ord-wait'], [0.12, 0.97, 'f-ord']], [[0.22, 0.9, 'f-ord']]]);
   text(svg, X(0.07), Y1 + 30, 'small mid', tr('取得待ち', 'waiting'));
   el(svg, 'path', { d: `M${X(0.22)} ${Y1 + 94} v6 H${X(0.9)} v-6`, fill: 'none', stroke: '#c03a33', 'stroke-width': 1.4 });
   text(svg, (X(0.22) + X(0.9)) / 2, Y1 + 118, 'small bad mid', tr('障害で 0.05 秒 → 5.05 秒', '0.05 s → 5.05 s during the fault'));
-  mark(X(0.9), Y1 + 86, Y1 + 152, '01a', 'W', tr('タイムアウト', 'timeout'), 'left');
+  mark(X(0.9), Y1 + 86, Y1 + 152, 'W', tr('タイムアウト', 'timeout'), 'left');
 
-  // 2. 01b 以降：決済 API を先に呼び、あとの短いトランザクション（INSERT）だけコネクションを握る（OrderService.kt）
+  // 2. 決済 API をトランザクションの外で呼ぶとき：先に呼び、あとの短いトランザクション（INSERT）だけコネクションを握る（OrderService.kt）
   const Y2 = Y1 + 206;
-  text(svg, LX, Y2, 'hl ord', tr('01b 以降：決済 API をトランザクションの外で呼ぶ', '01b onward: payment call outside the transaction'));
+  text(svg, LX, Y2, 'hl ord', tr('決済 API をトランザクションの外で呼ぶとき', 'Payment call outside the transaction'));
   const L2 = Y2 + 18;
   lane(L2, [[[0, 0.84, 'f-ord']], [[0.74, 0.76, 'f-ord-wait'], [0.76, 0.82, 'f-ord']], [[0.04, 0.72, 'f-ord']]]);
-  mark(X(0.79), L2 + GAP + 14, L2 + 116, '01b', 'W', tr('取得待ちを打ち切り、トランザクションを短くする', 'cut the connection wait, shorten the transaction'), 'left');
+  mark(X(0.79), L2 + GAP + 14, L2 + 116, 'W', tr('トランザクションを短くし、取得待ちを打ち切る', 'shorter transaction, capped connection wait'), 'left');
   // 呼び出しを包む 3 つ（上から外側 → 内側。PaymentClient の Retry(CircuitBreaker(Bulkhead(呼び出し)))）
   const RB = L2 + 184;
-  text(svg, X(0.04) + 28, RB - 28, 'note', tr('呼び出しを包む順（上が外側）', 'Wrapping order (top is outermost)'));
+  text(svg, X(0.04) + 14, RB - 28, 'note', tr('呼び出しを包む順（上が外側）', 'Wrapping order (top is outermost)'));
   el(svg, 'line', { class: 'cut', x1: X(0.04), y1: L2 + 2 * GAP + 14, x2: X(0.04), y2: RB + 52 });
-  [['03a', '', tr('リトライ（外側。W と λ が増える）', 'retry (outermost; raises W and λ)')],
-   ['03b', 'λ', tr('サーキットブレーカー', 'circuit breaker')],
-   ['02b', 'L', tr('バルクヘッド（内側）', 'bulkhead (innermost)')]].forEach(([id, letter, name], i) => {
+  [['', tr('リトライ（外側。W と λ が増える）', 'retry (outermost; raises W and λ)')],
+   ['λ', tr('サーキットブレーカー', 'circuit breaker')],
+   ['L', tr('バルクヘッド（内側）', 'bulkhead (innermost)')]].forEach(([letter, name], i) => {
     const y = RB + i * 28;
-    pill(X(0.04), y, id);
-    let cx = X(0.04) + 28;
+    dot(X(0.04), y);
+    let cx = X(0.04) + 14;
     if (letter) cx = text(svg, cx, y + 5, 'lbl', letter) + 6;
     text(svg, cx, y + 5, 'body', name);
   });

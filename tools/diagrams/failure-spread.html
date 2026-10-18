@@ -51,7 +51,7 @@
         el(svg, 'rect', { class: c === 'p' ? 'f-prd-wait' : 'f-ord-wait', x: QX + i * 10, y: MY - 8, width: 7, height: 16, rx: 1 });
       });
       el(svg, 'line', { class: 'ln', x1: QX + 98, y1: MY, x2: POOL_X - 3, y2: MY, 'marker-end': 'url(#arrow)' });
-      text(svg, POOL_X - 8, Y + 76, 'small end', tr('空きを待つ列（先着順）', 'queue (FIFO)'));
+      text(svg, POOL_X - 8, Y + 76, 'small end', tr('待ち行列（先着順）', 'queue (FIFO)'));
       text(svg, POOL_X - 8, MY + 30, 'small prd b end', tr('/products も並ぶ', '/products waits too'));
     }
 

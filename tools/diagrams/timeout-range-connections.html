@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Timeout range</title>
+<link rel="stylesheet" href="explainer.css">
+<style>
+  .z-short { fill: #e2e2e8; }
+  .z-long { fill: #f6d3cf; }
+  .t-short { font-size: 14px; fill: #3c3c44; }
+  .t-long { font-size: 14px; fill: #8f2a24; }
+</style>
+</head>
+<body>
+<!-- トランザクションの中で呼ぶとき、コネクションで見たタイムアウトの下限と上限。描き方は timeout-range.js -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>const TIMEOUT_CASE = 'connections';</script>
+<script src="timeout-range.js"></script>
+</body>
+</html>

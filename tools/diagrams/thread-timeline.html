@@ -97,7 +97,7 @@
   text(svg, x(fullAt) - 6, QB - 100 * QS + 5, 'small end', tr('100 件', '100'));
   text(svg, XE + 6, QB - queued.length * QS + 12, 'small prd b', `/products ${queuedProducts}`);
   text(svg, XE + 6, QB - (queuedOrders * QS) / 2 + 6, 'small ord b', `/orders ${queuedOrders}`);
-  text(svg, x(fullAt), 66, 'lbl', tr('空きを待つ列（先着順）', 'Queue (FIFO)'));
+  text(svg, x(fullAt), 66, 'lbl', tr('待ち行列（先着順）', 'Queue (FIFO)'));
   text(svg, x(fullAt), 86, 'small', tr(
     `${fullAt.toFixed(1)} 秒から、1 秒あたり 70 件ずつ増え、2.0 秒で ${queued.length} 件`,
     `grows by 70 req/s from ${fullAt.toFixed(1)} s (${queued.length} at 2.0 s)`));
