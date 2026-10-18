@@ -846,7 +846,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(http_server_requests_seconds_sum{job=\"order-api\",uri=~\"/orders|/products\"}[10s]))",
-          "legendFormat": "λ×W（完了したリクエストの到着率 × 平均時間）",
+          "legendFormat": "λ×W（1 秒に終わった件数 × 平均時間）",
           "refId": "B",
           "range": true
         }

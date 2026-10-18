@@ -48,7 +48,7 @@
   const bracket = (a, b, y) => el(svg, 'path', { d: `M${x(a) + 2} ${y} v7 H${x(b) - 2} v-7`, fill: 'none', stroke: '#6e6e73', 'stroke-width': 1.3 });
   const RA = PY + PH + 40;
   bracket(60, 120, RA);
-  text(svg, (x(60) + x(120)) / 2, RA + 28, 'body mid', tr('L と λW', 'L vs λW'));
+  text(svg, (x(60) + x(120)) / 2, RA + 28, 'body mid', tr('L と λ×W', 'L vs λ×W'));
   text(svg, (x(60) + x(120)) / 2, RA + 48, 'body mid', tr('成功率', 'success rate'));
   bracket(120, 240, RA);
   text(svg, (x(120) + x(240)) / 2, RA + 28, 'body mid', tr('成功率・使用中のスレッド・取得待ち', 'success rate, busy threads,'));

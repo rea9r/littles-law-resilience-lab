@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <title>Defenses</title>
 <link rel="stylesheet" href="explainer.css">
+<style>
+  /* 行ごとの色：スレッド・コネクション・決済 API の呼び出し。濃い色が握っている、薄い色が空きを待っている */
+  .r0 { fill: #6a55d6; } .r0w { fill: #c3b9f2; } .t0 { fill: #5342a2; }
+  .r1 { fill: #3b7dd8; } .r1w { fill: #b8cdf0; } .t1 { fill: #2b62b3; }
+  .r2 { fill: #b04aa8; } .r2w { fill: #e5c0e1; } .t2 { fill: #8e3587; }
+</style>
 </head>
 <body>
 <!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は 00・01a の形、下の段は 01b 以降の形で、防御はそれを入れるシナリオの段に、シナリオの名前（README の表と同じ）で打つ。W はスレッドやコネクションを握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
@@ -20,8 +26,8 @@
   const GAP = 36;
   function lane(y, segs) {
     segs.forEach((row, i) => {
-      text(svg, LX, y + i * GAP + 12, 'body b', ROWS[i]);
-      for (const [a, b, cls] of row) el(svg, 'rect', { class: cls, x: X(a), y: y + i * GAP, width: Math.max(4, X(b) - X(a)), height: BH, rx: 2 });
+      text(svg, LX, y + i * GAP + 12, `body b t${i}`, ROWS[i]);
+      for (const [a, b, cls] of row) el(svg, 'rect', { class: cls === 'f-ord-wait' ? `r${i}w` : `r${i}`, x: X(a), y: y + i * GAP, width: Math.max(4, X(b) - X(a)), height: BH, rx: 2 });
     });
   }
 
@@ -63,7 +69,8 @@
   lane(L2, [[[0, 0.84, 'f-ord']], [[0.74, 0.76, 'f-ord-wait'], [0.76, 0.82, 'f-ord']], [[0.04, 0.72, 'f-ord']]]);
   mark(X(0.79), L2 + GAP + 14, L2 + 116, '01b', 'W', tr('取得待ちを打ち切り、トランザクションを短くする', 'cut the connection wait, shorten the transaction'), 'left');
   // 呼び出しを包む 3 つ（上から外側 → 内側。PaymentClient の Retry(CircuitBreaker(Bulkhead(呼び出し)))）
-  const RB = L2 + 160;
+  const RB = L2 + 184;
+  text(svg, X(0.04) + 28, RB - 28, 'note', tr('呼び出しを包む順（上が外側）', 'Wrapping order (top is outermost)'));
   el(svg, 'line', { class: 'cut', x1: X(0.04), y1: L2 + 2 * GAP + 14, x2: X(0.04), y2: RB + 52 });
   [['03a', '', tr('リトライ（外側。W と λ が増える）', 'retry (outermost; raises W and λ)')],
    ['03b', 'λ', tr('サーキットブレーカー', 'circuit breaker')],
@@ -79,7 +86,7 @@
   // 凡例：色と、W・L・λ
   const LY = Y2END + 40;
   let lx = LX;
-  for (const [cls, s] of [['f-ord', tr('握っている', 'held')], ['f-ord-wait', tr('空きを待っている', 'waiting')]]) {
+  for (const [cls, s] of [['r1', tr('濃い色：握っている', 'dark: held')], ['r1w', tr('薄い色：空きを待っている', 'light: waiting')]]) {
     el(svg, 'rect', { class: cls, x: lx, y: LY - 11, width: 13, height: 13 });
     lx = text(svg, lx + 20, LY, 'body', s) + 28;
   }
