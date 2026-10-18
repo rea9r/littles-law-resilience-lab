@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Breaker window</title>
+<link rel="stylesheet" href="explainer.css">
+</head>
+<body>
+<!-- サーキットブレーカー（直近 10 秒で失敗率を数える）が開く時刻の計算。障害の直前に集計に残っていた成功約 550 件が 1 秒に 60 件ずつ抜け、失敗は 0.3 秒後から 1 秒に約 60 件ずつ増える。2 本が交わる（失敗率 50%）と開く -->
+<svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
+<script src="explainer.js"></script>
+<script>
+  const svg = document.getElementById('fig');
+  defs(svg);
+  const PX0 = 70, PX1 = 500, PY0 = 330, PY1 = 70, TMAX = 8, NMAX = 600;
+  const X = (t) => PX0 + (PX1 - PX0) * t / TMAX;
+  const Y = (n) => PY0 - (PY0 - PY1) * n / NMAX;
+  const S0 = 550, OUT = 60, IN = 60, T0 = 0.3;
+  const cross = (S0 + IN * T0) / (OUT + IN);
+
+  // 目盛り
+  for (let n = 0; n <= NMAX; n += 200) {
+    el(svg, 'line', { class: 'row-grid', x1: PX0, y1: Y(n), x2: PX1, y2: Y(n) });
+    text(svg, PX0 - 10, Y(n) + 5, 'small end', String(n));
+  }
+  for (let t = 0; t <= TMAX; t += 2) text(svg, X(t), PY0 + 22, 'small mid', String(t));
+  el(svg, 'line', { class: 'axis', x1: PX0, y1: PY0, x2: PX1, y2: PY0 });
+  text(svg, PX1, PY0 + 46, 'small end', tr('障害からの時間（秒）', 'seconds since the fault'));
+  text(svg, 20, 40, 'small', tr('直近 10 秒の集計に残っている呼び出し（件）', 'calls in the last 10 s of the count'));
+
+  // 最初の予測：失敗が 20 件たまれば開く（約 0.6 秒）
+  const tw = T0 + 20 / IN;
+  el(svg, 'line', { class: 'grid', x1: X(tw), y1: PY1 - 10, x2: X(tw), y2: PY0 });
+  text(svg, X(tw) + 6, PY1 - 2, 'small', tr('最初の予測：失敗が 20 件で開く（約 0.6 秒）', 'first prediction: opens at 20 failures (~0.6 s)'));
+
+  // 成功（抜けていく）と失敗（増えていく）
+  el(svg, 'line', { x1: X(0), y1: Y(S0), x2: X(TMAX), y2: Y(S0 - OUT * TMAX), stroke: '#3c3c44', 'stroke-width': 2.6 });
+  el(svg, 'line', { x1: X(T0), y1: Y(0), x2: X(TMAX), y2: Y(IN * (TMAX - T0)), stroke: '#c03a33', 'stroke-width': 2.6 });
+  let ty = Y(S0 - OUT * TMAX);
+  text(svg, X(TMAX) + 10, ty + 5, 'lbl', tr('成功', 'successes'));
+  text(svg, X(TMAX) + 10, ty + 25, 'small', tr('障害の前の約 550 件が', 'about 550 from before the fault,'));
+  text(svg, X(TMAX) + 10, ty + 45, 'small', tr('1 秒に 60 件ずつ抜ける', '60 leave per second'));
+  ty = Y(IN * (TMAX - T0));
+  text(svg, X(TMAX) + 10, ty + 5, 'lbl bad', tr('失敗', 'failures'));
+  text(svg, X(TMAX) + 10, ty + 25, 'small', tr('0.3 秒後から', 'from 0.3 s,'));
+  text(svg, X(TMAX) + 10, ty + 45, 'small', tr('1 秒に約 60 件ずつ増える', 'about 60 more per second'));
+
+  // 交わる点：失敗率 50% で開く
+  const yc = Y(S0 - OUT * cross);
+  el(svg, 'line', { class: 'cut', x1: X(cross), y1: yc, x2: X(cross), y2: PY0 });
+  el(svg, 'circle', { cx: X(cross), cy: yc, r: 5, fill: '#19191c' });
+  text(svg, X(cross) + 10, PY0 - 36, 'lbl', tr(`約 ${cross.toFixed(1)} 秒で開く`, `opens at about ${cross.toFixed(1)} s`));
+  text(svg, X(cross) + 10, PY0 - 14, 'small', tr('（失敗率 50%）', '(50% failures)'));
+  canvas(svg, 800, PY0 + 70);
+</script>
+</body>
+</html>
