@@ -70,7 +70,7 @@
   const RB = L2 + 184;
   text(svg, X(0.04) + 14, RB - 28, 'note', tr('呼び出しを包む順（上が外側）', 'Wrapping order (top is outermost)'));
   el(svg, 'line', { class: 'cut', x1: X(0.04), y1: L2 + 2 * GAP + 14, x2: X(0.04), y2: RB + 52 });
-  [['', tr('リトライ（外側。W と λ が増える）', 'retry (outermost; raises W and λ)')],
+  [['', tr('リトライ（外側。W と試行が増える）', 'retry (outermost; raises W and attempts)')],
    ['λ', tr('サーキットブレーカー', 'circuit breaker')],
    ['L', tr('バルクヘッド（内側）', 'bulkhead (innermost)')]].forEach(([letter, name], i) => {
     const y = RB + i * 28;
