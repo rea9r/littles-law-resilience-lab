@@ -88,12 +88,16 @@
     el(svg, 'rect', { class: cls, x: lx, y: LY - 11, width: 13, height: 13 });
     lx = text(svg, lx + 20, LY, 'body', s) + 28;
   }
+  // W はスレッド・コネクションのプールの値、L と λ は決済 API の呼び出しの値なので、行を分ける
   lx = LX;
-  for (const [m, s] of [['W', tr('スレッドやコネクションを握る・待つ時間', 'time a thread or connection is held or waited for')], ['L', tr('決済 API を同時に呼ぶ数', 'concurrent payment calls')], ['λ', tr('決済 API を 1 秒に呼ぶ数', 'payment calls per second')]]) {
-    lx = text(svg, lx, LY + 26, 'lbl', m) + 5;
-    lx = text(svg, lx, LY + 26, 'body', s) + 22;
+  lx = text(svg, lx, LY + 26, 'lbl', 'W') + 5;
+  text(svg, lx, LY + 26, 'body', tr('スレッドやコネクションを握る・待つ時間（プールの W）', 'time a thread or connection is held or waited for (the pools\' W)'));
+  lx = LX;
+  for (const [m, s] of [['L', tr('決済 API を同時に呼ぶ数', 'concurrent payment calls')], ['λ', tr('決済 API を 1 秒に呼ぶ数（どちらも決済 API の呼び出しの値）', 'payment calls per second (both for payment calls)')]]) {
+    lx = text(svg, lx, LY + 52, 'lbl', m) + 5;
+    lx = text(svg, lx, LY + 52, 'body', s) + 22;
   }
-  canvas(svg, 800, LY + 44);
+  canvas(svg, 800, LY + 70);
 </script>
 </body>
 </html>
