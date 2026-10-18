@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<!-- 決済 API のタイムアウトを置ける範囲。下限は平常時の p99 に余裕を足した値、上限は資源の上限 × 0.7 ÷ ピーク時の到着率。上の段は範囲がある形、下の 2 段は下限が上限を超えて範囲がない形 -->
+<!-- 決済 API のタイムアウトの下限と上限。下限は平常時の p99 に余裕を足した値、上限はプールの大きさ × 0.7 ÷ ピーク時の到着率。上の段は両方を満たす値がある形、下の 2 段は下限が上限を超えて両方を満たす値がない形 -->
 <svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
 <script src="explainer.js"></script>
 <script>
@@ -19,7 +19,7 @@
   let lx = text(svg, LX, 28, 'lbl', tr('下限', 'Lower bound'));
   text(svg, lx + 8, 28, 'body', tr('＝ 下流の平常時の p99 ＋ 余裕（これより短いと、平常時にもタイムアウトする）', '= the downstream\'s normal p99 + headroom (shorter times out even in normal times)'));
   lx = text(svg, LX, 52, 'lbl', tr('上限', 'Upper bound'));
-  text(svg, lx + 8, 52, 'body', tr('＝ 資源の数 × 0.7 ÷ ピーク時の到着率（これより長いと、障害時に λW が資源の数を超える）', '= resource count × 0.7 ÷ peak arrival rate (longer lets λW exceed the count)'));
+  text(svg, lx + 8, 52, 'body', tr('＝ プールの大きさ × 0.7 ÷ ピーク時の到着率（これより長いと、障害時に λW がプールの大きさを超える）', '= pool size × 0.7 ÷ peak arrival rate (longer lets λW exceed the pool size)'));
 
   const TOP = 84, LANE = 138, BH = 24;
   const lanes = [
@@ -43,7 +43,7 @@
     } else {
       el(svg, 'rect', { class: 'over', x: X(hi), y: by, width: X(lo) - X(hi), height: BH });
     }
-    // 下限と上限：線と、範囲（または隙間）の外向きに名前と式
+    // 下限と上限：線と、あいだ（または隙間）の外向きに名前と式
     const left = Math.min(lo, hi) === lo ? 'lower' : 'upper';
     for (const [kind, [ms, formula]] of [['lower', lower], ['upper', upper]]) {
       el(svg, 'line', { x1: X(ms), y1: by - 6, x2: X(ms), y2: by + BH + 6, stroke: '#19191c', 'stroke-width': 1.6 });
@@ -57,9 +57,9 @@
     const [p, label] = pick;
     el(svg, 'line', { x1: X(p), y1: by - 8, x2: X(p), y2: by + BH + 8, stroke: '#5342a2', 'stroke-width': 3 });
     text(svg, X(p) + 8, by - 12, 'small ord b', label);
-    // 範囲の中（選んだ値の線を避ける）か、隙間の上に結論
-    if (lo < hi) text(svg, (X(p) + X(hi)) / 2, by + 17, 'lbl ord mid', tr('置ける範囲', 'valid range'));
-    else text(svg, (X(lo) + X(hi)) / 2, by - 12, 'lbl bad mid', tr('置ける範囲がない', 'no valid range'));
+    // 両方を満たすあいだ（選んだ値の線を避ける）か、隙間の上に結論
+    if (lo < hi) text(svg, (X(p) + X(hi)) / 2, by + 17, 'lbl ord mid', tr('両方を満たす', 'both met'));
+    else text(svg, (X(lo) + X(hi)) / 2, by - 12, 'lbl bad mid', tr('両方を満たす値がない', 'nothing meets both'));
   });
 
   // 共通の目盛り

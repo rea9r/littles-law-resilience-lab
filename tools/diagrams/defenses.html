@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="explainer.css">
 </head>
 <body>
-<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は 00・01a の形、下の段は 01b 以降の形で、防御はそれを入れるシナリオの段に、シナリオの名前（README の表と同じ）で打つ。W は資源を握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
+<!-- /orders 1 件が、スレッド・コネクション・決済 API の呼び出しを握る時間の入れ子と、各防御がそのどこに効くか。上の段は 00・01a の形、下の段は 01b 以降の形で、防御はそれを入れるシナリオの段に、シナリオの名前（README の表と同じ）で打つ。W はスレッドやコネクションを握る・待つ時間、L と λ は決済 API の呼び出しについての値。棒の長さは模式で、比例していない -->
 <svg id="fig" xmlns="http://www.w3.org/2000/svg"></svg>
 <script src="explainer.js"></script>
 <script>
@@ -84,7 +84,7 @@
     lx = text(svg, lx + 20, LY, 'body', s) + 28;
   }
   lx = LX;
-  for (const [m, s] of [['W', tr('資源を握る・待つ時間', 'time a resource is held or waited for')], ['L', tr('決済 API を同時に呼ぶ数', 'concurrent payment calls')], ['λ', tr('決済 API を 1 秒に呼ぶ数', 'payment calls per second')]]) {
+  for (const [m, s] of [['W', tr('スレッドやコネクションを握る・待つ時間', 'time a thread or connection is held or waited for')], ['L', tr('決済 API を同時に呼ぶ数', 'concurrent payment calls')], ['λ', tr('決済 API を 1 秒に呼ぶ数', 'payment calls per second')]]) {
     lx = text(svg, lx, LY + 26, 'lbl', m) + 5;
     lx = text(svg, lx, LY + 26, 'body', s) + 22;
   }
