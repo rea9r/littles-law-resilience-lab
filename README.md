@@ -99,11 +99,10 @@ Results of every scenario are compared in [scenarios/SUMMARY.md](scenarios/SUMMA
 
 ## Documentation (Japanese)
 
-These notes, written in Japanese, are the basis of a companion article on Zenn (a Japanese tech blog platform).
+These notes, written in Japanese, are the basis of a companion article on Zenn (a Japanese tech blog platform). The article itself is drafted in a separate repository and will be linked here once it is published. Its figures are the PNGs in `docs/images/` and `scenarios/<scenario>/results/panels/`.
 
 - [scenarios/README.md](scenarios/README.md) and `scenarios/<scenario>/prediction.md`: assumptions, predictions and pass criteria written before each run
 - [docs/iteration-log.md](docs/iteration-log.md): every place where a prediction missed and how the lab was fixed
-- [docs/article-outline.md](docs/article-outline.md): the outline of the article
 
 ## Layout
 
